@@ -99,8 +99,9 @@ void renderDashboard(uint8_t *buffer,const DashboardData &d) {
   // Current weather occupies one third; a single-row clock occupies two thirds.
   icon(20,20,d.weatherIcon,90);
   snprintf(s,sizeof(s),"%d°C",d.temperature);text(120,10,s,font80,BLACK,210);
-  text(340,25,"UV",font28);if(d.uv<0)snprintf(s,sizeof(s),"--");else snprintf(s,sizeof(s),"%d",d.uv);
-  if(d.uv>=6){fill(380,16,51,70);text(385,5,s,font60,WHITE,45);}else text(385,5,s,font60,BLACK,45);
+  centeredText(386,8,"WIND",font20,92);
+  if(d.windSpeed<0)snprintf(s,sizeof(s),"--");else snprintf(s,sizeof(s),"%.1f",d.windSpeed);
+  centeredText(386,27,s,font60,92);centeredText(386,95,"km/h",font14,92);
   snprintf(s,sizeof(s),"Humidity: %d%%",d.humidity);text(120,95,s,font20);
   snprintf(s,sizeof(s),"Press: %d hPa",d.pressure);text(120,120,s,font20);line(20,150,433,150);
   icon(25,165,"icon_wind",30);compass(100,240,d.windDirection,d.windSpeed);

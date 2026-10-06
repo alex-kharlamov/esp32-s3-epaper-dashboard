@@ -9,7 +9,7 @@ A wide, quiet dashboard that runs entirely on an **ESP32-S3** and a **Waveshare 
 ## What you get
 
 - A huge single-row clock with date and automatic daylight-saving time.
-- Current temperature, humidity, pressure, UV, wind and US AQI.
+- Current temperature, humidity, pressure, wind speed and US AQI.
 - Eight hourly forecasts with **temperature / rain probability** beneath larger weather icons.
 - A clock-region update every minute, with a normal full refresh and fresh weather every ten minutes.
 - Hidden-password Wi-Fi setup over USB; credentials stay on the ESP32.
@@ -92,7 +92,7 @@ The renderer packs four pixels into each byte. A **163,200-byte framebuffer** li
 
 Every minute the firmware renders the current clock with cached weather, initializes the vendor fast waveform, transfers the frame, then selects the clock rectangle with the controller's **`0x83` partial-window register**. Both halves receive their own window. The weather, date and forecast remain visually unchanged. After BUSY releases, the firmware sends sleep commands and drives PWR LOW.
 
-Every ten minutes it fetches fresh weather and uses the normal full-screen waveform. The clock window includes only the digits; the date header updates with the full screen, including at midnight. Cached weather is retained if a request fails, with fetch time and a stale-data label on the next full refresh. Missing UV or AQI is shown as `--`.
+Every ten minutes it fetches fresh weather and uses the normal full-screen waveform. The clock window includes only the digits; the date header updates with the full screen, including at midnight. Cached weather is retained if a request fails, with fetch time and a stale-data label on the next full refresh. Missing AQI is shown as `--`.
 
 Weather and modelled air quality come from [Open-Meteo](https://open-meteo.com/). NTP synchronizes time, and a POSIX timezone rule handles daylight saving. HTTPS verifies certificates and hostnames using the ESP32's built-in CA bundle. Wi-Fi credentials are stored in NVS on the board, which is **not encrypted at rest** in this development build.
 
