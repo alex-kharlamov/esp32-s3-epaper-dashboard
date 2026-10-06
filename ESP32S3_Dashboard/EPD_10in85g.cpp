@@ -139,6 +139,8 @@ void EPD_10in85g_ReadBusy(void)
 function :	Turn On Display
 parameter:
 ******************************************************************************/
+static uint32_t lastWaveformMs=0;
+uint32_t EPD_10in85g_LastWaveformMs(){return lastWaveformMs;}
 static void EPD_10in85g_TurnOnDisplay(void)
 {
 
@@ -153,7 +155,8 @@ static void EPD_10in85g_TurnOnDisplay(void)
         delay(1);
     }
     EPD_10in85g_ReadBusy();
-    Serial.printf("Refresh complete after %lu ms (image needs visual confirmation)\n", (unsigned long)(millis()-refreshStart));
+    lastWaveformMs=millis()-refreshStart;
+    Serial.printf("Refresh complete after %lu ms (image needs visual confirmation)\n", (unsigned long)lastWaveformMs);
 }
 
 /******************************************************************************

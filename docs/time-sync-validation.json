@@ -1,0 +1,25 @@
+{
+  "ntp_sync_observed": true,
+  "ntp_resync_interval_configured_ms": 900000,
+  "startup_full": {
+    "target_epoch_ms": 1791285180000,
+    "finish_epoch_ms": 1791285196567,
+    "offset_ms": 16567,
+    "cycle_ms": 20619
+  },
+  "minute_transitions": [
+    {
+      "target_epoch_ms": 1791285240000,
+      "finish_epoch_ms": 1791285240047,
+      "offset_ms": 47,
+      "cycle_ms": 8958
+    },
+    {
+      "target_epoch_ms": 1791285300000,
+      "finish_epoch_ms": 1791285300014,
+      "offset_ms": 14,
+      "cycle_ms": 8959
+    }
+  ],
+  "scope": "Measured cycle completion relative to the ESP32 NTP-synchronized wall clock, including sleep and PWR LOW. Image may settle slightly earlier. Two consecutive single-window updates; no external optical measurement or 15-minute resync repeat captured. Initial full frame is not a boundary-alignment measurement."
+}

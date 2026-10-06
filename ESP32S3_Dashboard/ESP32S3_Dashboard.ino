@@ -4,6 +4,8 @@
 #include "Configuration.h"
 #include <string.h>
 #include <esp_heap_caps.h>
+#include <sys/time.h>
+#include "ClockSchedule.h"
 
 const char *demoStage="boot";
 
@@ -32,28 +34,44 @@ constexpr uint32_t WEATHER_INTERVAL_MS=DASH_FULL_INTERVAL_MS;
 constexpr uint32_t BOOT_COOLDOWN_MS=DASH_BOOT_COOLDOWN_MS;
 uint32_t lastDisplayStarted=0,lastWeatherAttempt=0,lastFullStarted=0;
 char displayedClock[6]={};
+int64_t displayedMinute=-1,lastFullMinute=-1;
+uint32_t fullCycleEstimate=21000,clockOverheadEstimate=3500,clockWaveEstimate=(DASH_CLOCK_WINDOW_ENABLED && DASH_CLOCK_PLL==0x07)?5270:12090;
+int64_t wallMillis(){timeval tv{};gettimeofday(&tv,nullptr);return int64_t(tv.tv_sec)*1000+tv.tv_usec/1000;}
+
 bool hasDrawn=false,weatherAttempted=false,weatherAvailable=false,bootReady=false;
 void loop() {
   serviceLiveSetup();
-  // Fetch off-screen into cached data; the minute-by-minute renderer reads it.
-  uint32_t now=millis();
-  if(!weatherAttempted || now-lastWeatherAttempt>=(weatherAvailable?WEATHER_INTERVAL_MS:30000)) {
+  uint32_t now=millis();int64_t wallNow=wallMillis();
+  // Keep network work away from the end-of-minute rendering deadline.
+  bool weatherDue=!weatherAttempted || now-lastWeatherAttempt>=(weatherAvailable?WEATHER_INTERVAL_MS:30000);
+  if(weatherDue && (!hasDrawn || wallNow%60000<15000)) {
     weatherAttempted=true;lastWeatherAttempt=now;
     weatherAvailable=fetchLiveData() || weatherAvailable;
+    wallNow=wallMillis();
   }
   if(!bootReady && millis()>=BOOT_COOLDOWN_MS)bootReady=true;
-  if(!bootReady || (hasDrawn && millis()-lastDisplayStarted<DISPLAY_INTERVAL_MS)){delay(20);return;}
-  const bool fullRefresh=!hasDrawn || millis()-lastFullStarted>=WEATHER_INTERVAL_MS;
-  if(fullRefresh && weatherAvailable) {
-    lastWeatherAttempt=millis();fetchLiveData(); // Fresh weather accompanies each full refresh.
-  }
-  DashboardData data{};if(!getLiveDashboard(data)){delay(20);return;}
-  ClockWindow windows[4];int windowCount=0;
+  if(!bootReady || wallNow<1700000000000LL){delay(20);return;}
+  const int64_t upcoming=(wallNow/DISPLAY_INTERVAL_MS+1)*DISPLAY_INTERVAL_MS;
+  bool fullRefresh=!hasDrawn || upcoming-lastFullMinute>=WEATHER_INTERVAL_MS || millis()-lastFullStarted>=WEATHER_INTERVAL_MS+DISPLAY_INTERVAL_MS;
+  ClockWindow windows[4];int windowCount=1;
+  DashboardData forecast{};
+  if(!getLiveDashboard(forecast,time_t(upcoming/1000))){delay(20);return;}
+  if(hasDrawn && DASH_CLOCK_WINDOW_ENABLED)windowCount=changedClockWindows(displayedClock,forecast.clock,windows);
+  uint32_t lead=fullRefresh?fullCycleEstimate:(clockOverheadEstimate+clockWaveEstimate*(windowCount?windowCount:1));
+  if(lead>=DISPLAY_INTERVAL_MS)lead=DISPLAY_INTERVAL_MS-1000;
+  int64_t target=clockDisplayTarget(wallNow,displayedMinute,lead,DISPLAY_INTERVAL_MS);
+  if(target<0){delay(20);return;}
+  // A late wake or NTP correction may target the current, not upcoming, minute.
+  fullRefresh=!hasDrawn || target-lastFullMinute>=WEATHER_INTERVAL_MS || millis()-lastFullStarted>=WEATHER_INTERVAL_MS+DISPLAY_INTERVAL_MS;
+  DashboardData data{};if(!getLiveDashboard(data,time_t(target/1000))){delay(20);return;}
+  windowCount=0;
   if(!fullRefresh && DASH_CLOCK_WINDOW_ENABLED) {
     windowCount=changedClockWindows(displayedClock,data.clock,windows);
-    if(!windowCount) {lastDisplayStarted=millis();delay(20);return;}
+    if(!windowCount) {displayedMinute=target;delay(20);return;}
     Serial.printf("CLOCK_DIRTY: %s -> %s, %d window(s)\n",displayedClock,data.clock,windowCount);
   }
+  uint32_t cycleStarted=millis();
+  Serial.printf("CLOCK_SCHEDULE: target_epoch_ms=%lld start_epoch_ms=%lld lead_ms=%lu\n",(long long)target,(long long)wallMillis(),(unsigned long)lead);
   uint8_t *frame=(uint8_t*)heap_caps_malloc(DASH_BYTES,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
   if(!frame)demoAbort("Cannot allocate framebuffer in PSRAM");
   demoStage="render dashboard";uint32_t started=millis();
@@ -75,6 +93,13 @@ void loop() {
   else EPD_10in85g_Display(frame);
   Serial.println("Entering display sleep");EPD_10in85g_Sleep();DEV_Module_Exit();
   heap_caps_free(frame);
+  uint32_t elapsed=millis()-cycleStarted,wave=EPD_10in85g_LastWaveformMs();
+  unsigned passes=fullRefresh?1:(windowCount?windowCount:1);
+  if(fullRefresh){fullCycleEstimate=elapsed;lastFullMinute=target;}
+  else clockWaveEstimate=wave;
+  if(elapsed>=wave*passes)clockOverheadEstimate=elapsed-wave*passes;
+  displayedMinute=target;
+  Serial.printf("CLOCK_COMPLETE: target_epoch_ms=%lld finish_epoch_ms=%lld offset_ms=%lld cycle_ms=%lu\n",(long long)target,(long long)wallMillis(),(long long)(wallMillis()-target),(unsigned long)elapsed);
   snprintf(displayedClock,sizeof(displayedClock),"%s",data.clock);
   hasDrawn=true;
   Serial.println("LIVE_REFRESH_DONE: refresh completed; panel asleep, PWR LOW.");

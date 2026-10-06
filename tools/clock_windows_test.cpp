@@ -1,5 +1,6 @@
 #include "Dashboard.h"
 #include "ClockUpdate.h"
+#include "ClockSchedule.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,6 +25,17 @@ void check(const char *before,const char *after) {
  }
 }
 int main() {
+ // Before the deadline, at it, after a completed predictive update, and late.
+ if(clockDisplayTarget(112999,60000,7000)!=-1)abort();
+ if(clockDisplayTarget(113000,60000,7000)!=120000)abort();
+ if(clockDisplayTarget(119000,120000,7000)!=-1)abort();
+ if(clockDisplayTarget(120001,120000,7000)!=-1)abort();
+ if(clockDisplayTarget(125000,60000,7000)!=120000)abort();
+ // NTP jumps in both directions and a first frame spanning a minute change.
+ if(clockDisplayTarget(185000,60000,7000)!=180000)abort();
+ if(clockDisplayTarget(65000,180000,7000)!=60000)abort();
+ if(clockDisplayTarget(118000,-1,21000)!=120000)abort();
+ puts("Wall-clock schedule boundaries, lateness, NTP corrections and startup passed.");
  char before[6],after[6];
  for(int minute=0;minute<1440;minute++) {
   int next=(minute+1)%1440;

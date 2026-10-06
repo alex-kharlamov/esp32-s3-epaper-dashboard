@@ -74,4 +74,6 @@ Only one process should own the serial port. Close the Arduino serial monitor be
 | Other areas change during a clock update | Set `DASH_CLOCK_WINDOW_ENABLED=false` and rebuild for fast full-screen minute updates; inspect the exact panel revision and wiring. |
 | UI assets not found | Use the included generated `DashboardAssets.cpp`; regenerate only when intentionally editing fonts/icons. |
 
+NTP time synchronization is automatic every 15 minutes. Opening a monitor can reset the board and restart its three-minute cooldown. `NTP_SYNC` confirms a server response; `CLOCK_COMPLETE` includes `offset_ms`, the difference between completion and the intended minute boundary. The first full image is immediate after cooldown and is not a boundary-alignment measurement.
+
 Send `STATUS` followed by newline over serial to report Wi-Fi/time/weather availability without credentials. Logs remain local and are ignored by Git. When sharing diagnostics, remove SSIDs, addresses and other personal information.

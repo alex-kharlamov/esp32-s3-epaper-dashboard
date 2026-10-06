@@ -60,3 +60,5 @@ void EPD_10in85g_SetClockFrameRate(UBYTE pll);
 
 #include "ClockUpdate.h"
 void EPD_10in85g_DisplayClockWindows(const UBYTE *image,const ClockWindow *windows,unsigned count);
+
+uint32_t EPD_10in85g_LastWaveformMs();

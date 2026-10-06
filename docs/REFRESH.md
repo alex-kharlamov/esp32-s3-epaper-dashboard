@@ -38,9 +38,15 @@ The vendor `DisplayPart()` helper is not used. It fills the area outside its inp
 
 ## Scheduling
 
-The first update after a 180-second boot cooldown is normal full-screen. Clock cycles are due 60 seconds from the previous cycle start. When 600 seconds have elapsed since the previous full-cycle start, a fresh weather fetch and normal full refresh replace that minute's window update.
+The first update after a 180-second boot cooldown is normal full-screen. Subsequent clock updates follow **NTP wall-clock minute boundaries**, not a repeating delay measured from boot.
 
-A failed weather fetch keeps cached data. Network calls can delay a cycle; updates never overlap, and there is no catch-up burst. Date and forecast labels change only with full updates.
+The scheduler prepares the upcoming minute’s digits and starts before its boundary, estimating the complete render, initialization, transfer, waveform and sleep duration. It learns the full-cycle duration and the per-pass clock waveform/overhead from successful cycles. Separate changed digit groups increase the lead time. The goal is for the image to settle near the minute boundary, rather than beginning its several-second refresh afterward. During the transition it may show incomplete or upcoming digits.
+
+Periodic full updates target ten minutes after the last full image timestamp, with a monotonic fallback following a backward time correction. The first image uses its estimated completion time; it is not delayed to wait for a minute boundary. Late wakes and significant forward/backward NTP corrections are handled using current wall time, with no catch-up burst.
+
+NTP resynchronizes every **15 minutes** using the existing three servers. `NTP_SYNC` reports actual synchronization callbacks. `CLOCK_SCHEDULE` and `CLOCK_COMPLETE` report the target, actual start/finish timestamps and completion offset in milliseconds. Completion includes sleep and PWR LOW, so the physical image may settle slightly earlier. This is measured timing compensation, not a guarantee of exact visual synchronization at every temperature.
+
+Weather requests are attempted early in a minute, away from the normal clock deadline; the extra synchronous fetch immediately before a full refresh was removed. Cached data is displayed until the next full refresh. Slow network requests, reconnects or firmware stalls can still delay a cycle; if that happens, the scheduler catches up to wall time. Failed requests retain cached weather.
 
 ## What has been established
 
@@ -60,3 +66,9 @@ Sources: [exact panel manual, printed page 40](https://files.waveshare.com/wiki/
 Run `./tools/test_clock_windows.sh`. It renders every one of the 1,440 daily minute transitions and checks that each changed pixel falls inside an aligned window, including midnight. It also checks unchanged time, forward/backward corrections, single-digit changes, minute carry and separate hour/minute groups, with the colon excluded. These software checks do not replace physical confirmation of preservation and ghosting.
 
 On the device, `12:02 → 12:03` produced one group: controller S received x=456…651 (global x=1136…1331), y=40…323, while controller M received only its four white padding pixels. The waveform completed in 5.270 seconds. See [the capture summary](digit-window-validation.json). Visual confirmation and a physical two-pass rollover capture are separate from the software tests.
+
+## NTP alignment capture
+
+An actual `NTP_SYNC` callback was observed after upload. The next two minute transitions, `12:13 → 12:14` and `12:14 → 12:15`, completed **47 ms** and **14 ms** after their respective NTP wall-clock boundaries. Complete clock cycles measured **8.958 s** and **8.959 s**, including the 5.27-second waveform plus rendering, initialization, transfer and sleep. The scheduler started those cycles with 8.928 s and 8.958 s of lead time. See [the measurement record](time-sync-validation.json).
+
+These are cycle-end timestamps on the device, not external optical measurements or a guarantee of NTP server accuracy. The 15-minute resync interval is configured; the short capture observed the initial sync only.

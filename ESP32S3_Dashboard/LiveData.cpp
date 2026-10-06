@@ -8,6 +8,7 @@
 #include <HTTPClient.h>
 #include <Preferences.h>
 #include <time.h>
+#include <esp_sntp.h>
 #include <math.h>
 
 namespace {
@@ -70,6 +71,10 @@ void connectSaved(bool scan=false) {
 void beginLiveData() {
   setenv("TZ",LOCAL_TIMEZONE,1);tzset();
   configTzTime(LOCAL_TIMEZONE,"pool.ntp.org","time.cloudflare.com","time.google.com");
+  esp_sntp_set_sync_interval(15*60*1000);
+  esp_sntp_set_time_sync_notification_cb([](struct timeval *tv) {
+    Serial.printf("NTP_SYNC: epoch=%lld.%06ld\n",(long long)tv->tv_sec,(long)tv->tv_usec);
+  });
   WiFi.onEvent([](arduino_event_id_t event,arduino_event_info_t info) {
     if(event==ARDUINO_EVENT_WIFI_STA_DISCONNECTED)Serial.printf("WIFI disconnected: reason=%d\n",info.wifi_sta_disconnected.reason);
     if(event==ARDUINO_EVENT_WIFI_STA_GOT_IP)Serial.println("WIFI connected; IP obtained.");
@@ -148,9 +153,10 @@ bool fetchLiveData() {
   Serial.printf("LIVE fetch OK: temperature=%d humidity=%d AQI=%d; eight hourly forecasts.\n",live.temperature,live.humidity,live.aqi);
   return true;
 }
-bool getLiveDashboard(DashboardData &data) {
+bool getLiveDashboard(DashboardData &data,time_t displayAt) {
   time_t now=time(nullptr);if(!haveWeather||now<1700000000)return false;
-  tm local{};localtime_r(&now,&local);
+  time_t clockAt=displayAt?displayAt:now;
+  tm local{};localtime_r(&clockAt,&local);
   strftime(clockText,sizeof(clockText),"%H:%M",&local);strftime(dateText,sizeof(dateText),"%d %B %Y",&local);
   const char *days[]={"SUN","MON","TUE","WED","THU","FRI","SAT"};snprintf(weekdayText,sizeof(weekdayText),"%s",days[local.tm_wday]);
   tm updated{};localtime_r(&fetchedAt,&updated);char stamp[6];strftime(stamp,sizeof(stamp),"%H:%M",&updated);
