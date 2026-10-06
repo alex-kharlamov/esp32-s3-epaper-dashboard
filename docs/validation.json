@@ -1,0 +1,33 @@
+{
+  "firmware": "LIVE v7 WINDOW TEST",
+  "cycles": [
+    {
+      "start_ms": 181264,
+      "clock": "11:26",
+      "mode": "FULL",
+      "refresh_ms": 16971
+    },
+    {
+      "start_ms": 241490,
+      "clock": "11:27",
+      "mode": "CLOCK_WINDOW",
+      "refresh_ms": 12090
+    },
+    {
+      "start_ms": 301707,
+      "clock": "11:28",
+      "mode": "CLOCK_WINDOW",
+      "refresh_ms": 12090
+    }
+  ],
+  "spacing_ms": [
+    60226,
+    60217
+  ],
+  "full_interval_ms": 600000,
+  "physical_confirmation": "User confirmed only clock updates; weather/date/forecast stay still",
+  "scheduled_ten_minute_repeat_observed": false,
+  "source": "https://files.waveshare.com/wiki/10.85inch_e-Paper_HAT%2B_G/10.85inch_e-Paper_G.pdf#page=43",
+  "tested_board": "ESP32-S3-N16R8 / Waveshare 10.85-inch HAT+ (G)",
+  "note": "Captured on development hardware; no device identifiers or credentials included."
+}
