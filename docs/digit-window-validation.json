@@ -1,0 +1,30 @@
+{
+  "mode": "digit-aware clock windows, fixed 120 Hz",
+  "first_full": {
+    "uptime_ms": 181280,
+    "waveform_busy_ms": 16971
+  },
+  "minute_update": {
+    "previous_clock": "12:02",
+    "current_clock": "12:03",
+    "uptime_ms": 241511,
+    "changed_groups": 1,
+    "controller_0": {
+      "x0": 472,
+      "x1": 475,
+      "y0": 40,
+      "y1": 40,
+      "purpose": "white padding; no changed digit on this controller"
+    },
+    "controller_1": {
+      "x0": 456,
+      "x1": 651,
+      "y0": 40,
+      "y1": 323,
+      "purpose": "last minute digit"
+    },
+    "waveform_busy_ms": 5270
+  },
+  "software_checks": "All 1440 daily minute transitions, midnight, unchanged time, forward/backward corrections; changed pixels covered and colon excluded.",
+  "physical_scope": "First full and one final-minute-digit window completed. Visual confirmation pending. Two-pass rollover not physically captured."
+}

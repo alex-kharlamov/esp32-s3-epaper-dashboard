@@ -413,17 +413,36 @@ void EPD_10in85g_Display(const UBYTE *Image)
     EPD_10in85g_WriteFrame(Image);
     EPD_10in85g_TurnOnDisplay();
 }
-void EPD_10in85g_DisplayWindow(const UBYTE *Image, UWORD x, UWORD y, UWORD width, UWORD height)
+void EPD_10in85g_DisplayClockWindows(const UBYTE *Image,const ClockWindow *windows,unsigned count)
 {
-    const unsigned endX=unsigned(x)+width-1,endY=unsigned(y)+height-1;
-    // This dashboard clock crosses both 680-pixel controllers. Reject unsupported
-    // geometry instead of accidentally refreshing an unmasked controller.
-    if(!width || !height || x>=680 || endX<680 || endX>=1360 || endY>=480 || (x%4) || (width%4))
-        demoAbort("Invalid cross-controller partial-window geometry");
+    if(!count || count>4)demoAbort("Invalid clock window count");
+    for(unsigned i=0;i<count;i++) {
+        const auto &w=windows[i];unsigned endX=unsigned(w.x)+w.width,endY=unsigned(w.y)+w.height;
+        if(!w.width || !w.height || endX>1360 || endY>480 || w.x%4 || w.width%4)
+            demoAbort("Invalid clock window geometry");
+    }
     EPD_10in85g_WriteFrame(Image);
-    EPD_10in85g_Window(0,x,y,679,endY);
-    EPD_10in85g_Window(1,0,y,endX-680,endY);
-    EPD_10in85g_TurnOnDisplay();
+    for(unsigned i=0;i<count;i++) {
+        const auto &w=windows[i];unsigned endX=unsigned(w.x)+w.width-1,endY=unsigned(w.y)+w.height-1;
+        // BUSY is shared: both controllers receive the refresh command. A half
+        // with no changed digit gets a four-pixel white clock-padding window,
+        // never an unchanged digit. These y=40 padding pixels precede the glyphs.
+        if(w.x<680)EPD_10in85g_Window(0,w.x,w.y,endX<680?endX:679,endY);
+        else {
+            if(Image[40*340+472/4]!=0x55)demoAbort("Clock padding is not white");
+            EPD_10in85g_Window(0,472,40,475,40);
+        }
+        if(endX>=680)EPD_10in85g_Window(1,w.x>=680?w.x-680:0,w.y,endX-680,endY);
+        else {
+            if(Image[40*340+680/4]!=0x55)demoAbort("Clock padding is not white");
+            EPD_10in85g_Window(1,0,40,3,40);
+        }
+        EPD_10in85g_TurnOnDisplay();
+    }
+}
+void EPD_10in85g_DisplayWindow(const UBYTE *Image,UWORD x,UWORD y,UWORD width,UWORD height)
+{
+    ClockWindow window={x,y,width,height};EPD_10in85g_DisplayClockWindows(Image,&window,1);
 }
 
 void EPD_10in85g_Display_2(const UBYTE *Image)

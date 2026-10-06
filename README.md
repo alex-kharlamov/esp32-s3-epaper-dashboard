@@ -11,7 +11,7 @@ A wide, quiet dashboard that runs entirely on an **ESP32-S3** and a **Waveshare 
 - A huge single-row clock with date and automatic daylight-saving time.
 - Current temperature, humidity, pressure, wind speed and US AQI.
 - Eight hourly forecasts with **temperature / rain probability** beneath larger weather icons.
-- A clock-region update every minute, with a normal full refresh and fresh weather every ten minutes.
+- A changed-digit clock update every minute, with a normal full refresh and fresh weather every ten minutes.
 - Hidden-password Wi-Fi setup over USB; credentials stay on the ESP32.
 - A desktop preview using the actual firmware renderer.
 
@@ -90,13 +90,15 @@ flowchart LR
 
 The renderer packs four pixels into each byte. A **163,200-byte framebuffer** lives in PSRAM; glyphs and weather icons live in flash. The image is split across the display's two controllers.
 
-Every minute the firmware renders the current clock with cached weather, initializes the vendor fast waveform and selects a fixed 120 Hz frame rate, transfers the frame, then selects the clock rectangle with the controller's **`0x83` partial-window register**. Both halves receive their own window. The weather, date and forecast remain visually unchanged. After BUSY releases, the firmware sends sleep commands and drives PWR LOW.
+Every minute the firmware renders the current clock with cached weather, initializes the vendor fast waveform and selects a fixed 120 Hz frame rate, transfers the frame, then compares `HH:MM` with the last successfully displayed time and selects only changed digit groups with the controller's **`0x83` partial-window register**. Adjacent changed digits share a window. Separate hour/minute groups use separate waveform passes, preserving the colon and unchanged digits. The weather, date and forecast remain visually unchanged. After BUSY releases, the firmware sends sleep commands and drives PWR LOW.
 
-Every ten minutes it fetches fresh weather and uses the normal full-screen waveform. The clock window includes only the digits; the date header updates with the full screen, including at midnight. Cached weather is retained if a request fails, with fetch time and a stale-data label on the next full refresh. Missing AQI is shown as `--`.
+Every ten minutes it fetches fresh weather and uses the normal full-screen waveform. Minute windows include only changed digit groups; the date header updates with the full screen, including at midnight. Cached weather is retained if a request fails, with fetch time and a stale-data label on the next full refresh. Missing AQI is shown as `--`.
 
 Weather and modelled air quality come from [Open-Meteo](https://open-meteo.com/). NTP synchronizes time, and a POSIX timezone rule handles daylight saving. HTTPS verifies certificates and hostnames using the ESP32's built-in CA bundle. Wi-Fi credentials are stored in NVS on the board, which is **not encrypted at rest** in this development build.
 
 [Refresh commands, timing evidence and limitations →](docs/REFRESH.md)
+
+Examples: `12:34 → 12:35` refreshes only the last minute digit; `12:39 → 12:40` refreshes both minute digits; `09:59 → 10:00` uses separate hour and minute windows. If the time is unchanged, no minute refresh is sent. A ten-minute full refresh still updates the complete dashboard.
 
 The faster clock mode produced **small coloured residue** in the physical test, accepted by the tester. Set `DASH_CLOCK_PLL=0x08` to return to the cleaner vendor dynamic mode (about 12.1 seconds). A two-second mode has not been established; see [the GxEPD2 comparison and speed experiment](docs/SPEED_RESEARCH.md).
 

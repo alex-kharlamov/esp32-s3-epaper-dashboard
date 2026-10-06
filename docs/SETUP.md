@@ -51,7 +51,7 @@ Change `DASH_LATITUDE`, `DASH_LONGITUDE` and `DASH_LOCATION_LABEL` in `Configura
 
 `DASH_CLOCK_PLL=0x07` selects the tested fixed 120 Hz mode (5.27 seconds waveform, with small coloured residue). Set it to `0x08` for the original, cleaner vendor dynamic mode (about 12.1 seconds). Only these two values are accepted. Normal ten-minute full updates keep the vendor frame-rate settings.
 
-Clock-window geometry is fixed to this 1360 × 480 layout. Changing the layout requires updating the rectangle in the sketch as well.
+Digit-window geometry matches this 1360 × 480 layout and LED font. Changing the clock layout requires updating `clockRow()` and `changedClockWindows()` together, then rerunning `tools/test_clock_windows.sh`.
 
 ## Wi-Fi setup
 

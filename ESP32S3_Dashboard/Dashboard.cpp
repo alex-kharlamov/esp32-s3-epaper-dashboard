@@ -1,5 +1,6 @@
 // Native ESP32 port of main.py render_screen() at upstream ceced5eb.
 #include "Dashboard.h"
+#include "ClockUpdate.h"
 #include "DashboardAssets.h"
 #include <math.h>
 #include <stdio.h>
@@ -127,4 +128,31 @@ void renderDashboard(uint8_t *buffer,const DashboardData &d) {
   }
   if(d.statusText)text(20,463,d.statusText,font14,BLACK,1320);
   else if(d.sampleData)text(20,463,"SAMPLE DATA  /  ESP32-S3  /  FORECAST: °C / RAIN CHANCE",font14);
+}
+
+int changedClockWindows(const char *previous,const char *current,ClockWindow windows[4]) {
+  if(!previous || !current || strlen(previous)!=5 || strlen(current)!=5 || previous[2]!=':' || current[2]!=':') {
+    windows[0]={472,40,868,284};return 1;
+  }
+  // Same metrics as clockRow. These LED digits have equal advances and bounds.
+  int top=10000,bottom=-10000,total=textWidth(current,font180);
+  for(int i=0;i<5;i++) {
+    const Glyph &g=glyph(font180,current[i]);
+    if(g.y<top)top=g.y;if(g.y+g.h>bottom)bottom=g.y+g.h;
+  }
+  float scale=float(867)/total;if((bottom-top)*scale>279)scale=float(279)/(bottom-top);
+  float cursor=473+(867-total*scale)/2;
+  int count=0,lastChanged=-2;
+  for(int i=0;i<5;i++) {
+    const Glyph &g=glyph(font180,current[i]);
+    if(i!=2 && previous[i]!=current[i]) {
+      int left=int(floor(cursor))&~3,right=(int(ceil(cursor+g.advance*scale))+3)&~3;
+      ClockWindow window={uint16_t(left),40,uint16_t(right-left),284};
+      if(lastChanged==i-1) windows[count-1].width=right-windows[count-1].x;
+      else windows[count++]=window;
+      lastChanged=i;
+    }
+    cursor+=g.advance*scale;
+  }
+  return count;
 }

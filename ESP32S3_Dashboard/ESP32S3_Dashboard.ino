@@ -2,6 +2,7 @@
 #include "Dashboard.h"
 #include "LiveData.h"
 #include "Configuration.h"
+#include <string.h>
 #include <esp_heap_caps.h>
 
 const char *demoStage="boot";
@@ -30,6 +31,7 @@ constexpr uint32_t DISPLAY_INTERVAL_MS=DASH_CLOCK_INTERVAL_MS;
 constexpr uint32_t WEATHER_INTERVAL_MS=DASH_FULL_INTERVAL_MS;
 constexpr uint32_t BOOT_COOLDOWN_MS=DASH_BOOT_COOLDOWN_MS;
 uint32_t lastDisplayStarted=0,lastWeatherAttempt=0,lastFullStarted=0;
+char displayedClock[6]={};
 bool hasDrawn=false,weatherAttempted=false,weatherAvailable=false,bootReady=false;
 void loop() {
   serviceLiveSetup();
@@ -46,6 +48,12 @@ void loop() {
     lastWeatherAttempt=millis();fetchLiveData(); // Fresh weather accompanies each full refresh.
   }
   DashboardData data{};if(!getLiveDashboard(data)){delay(20);return;}
+  ClockWindow windows[4];int windowCount=0;
+  if(!fullRefresh && DASH_CLOCK_WINDOW_ENABLED) {
+    windowCount=changedClockWindows(displayedClock,data.clock,windows);
+    if(!windowCount) {lastDisplayStarted=millis();delay(20);return;}
+    Serial.printf("CLOCK_DIRTY: %s -> %s, %d window(s)\n",displayedClock,data.clock,windowCount);
+  }
   uint8_t *frame=(uint8_t*)heap_caps_malloc(DASH_BYTES,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
   if(!frame)demoAbort("Cannot allocate framebuffer in PSRAM");
   demoStage="render dashboard";uint32_t started=millis();
@@ -63,10 +71,11 @@ void loop() {
   demoStage="dashboard transfer";
   Serial.println("Transfer UI to both controllers (81,600 bytes each)");
   if(fullRefresh)EPD_10in85g_Display(frame);
-  else if(DASH_CLOCK_WINDOW_ENABLED)EPD_10in85g_DisplayWindow(frame,472,40,868,284);
+  else if(DASH_CLOCK_WINDOW_ENABLED)EPD_10in85g_DisplayClockWindows(frame,windows,windowCount);
   else EPD_10in85g_Display(frame);
   Serial.println("Entering display sleep");EPD_10in85g_Sleep();DEV_Module_Exit();
   heap_caps_free(frame);
+  snprintf(displayedClock,sizeof(displayedClock),"%s",data.clock);
   hasDrawn=true;
   Serial.println("LIVE_REFRESH_DONE: refresh completed; panel asleep, PWR LOW.");
   Serial.flush();

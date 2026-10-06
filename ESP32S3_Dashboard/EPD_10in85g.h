@@ -57,3 +57,6 @@ void EPD_10in85g_Sleep(void);
 #endif
 
 void EPD_10in85g_SetClockFrameRate(UBYTE pll);
+
+#include "ClockUpdate.h"
+void EPD_10in85g_DisplayClockWindows(const UBYTE *image,const ClockWindow *windows,unsigned count);
