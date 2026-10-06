@@ -566,3 +566,12 @@ void EPD_10in85g_Sleep(void)
 	EPD_10in85g_SendData_ALL(0xA5); 
 	DEV_Delay_ms(100);
 }
+
+// Exact panel manual, printed page 25: 07 = fixed 120 Hz, 08 = vendor dynamic.
+// Apply after fast initialization only; normal full refresh keeps vendor settings.
+void EPD_10in85g_SetClockFrameRate(UBYTE pll) {
+    if(pll!=0x07 && pll!=0x08)demoAbort("Unsupported clock frame rate");
+    EPD_10in85g_SendCommand_ALL(0x30);
+    EPD_10in85g_SendData_ALL(pll);
+    Serial.printf("CLOCK_PLL: 0x%02X (%s)\n",pll,pll==0x07?"fixed 120 Hz":"vendor dynamic");
+}

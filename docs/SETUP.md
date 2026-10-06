@@ -49,6 +49,8 @@ Change `DASH_LATITUDE`, `DASH_LONGITUDE` and `DASH_LOCATION_LABEL` in `Configura
 
 `DASH_TIMEZONE` uses a **POSIX timezone rule**, not an IANA string such as `Europe/London`. The default `GMT0BST,M3.5.0/1,M10.5.0` handles UK winter/summer time. Supply an appropriate POSIX rule for your location.
 
+`DASH_CLOCK_PLL=0x07` selects the tested fixed 120 Hz mode (5.27 seconds waveform, with small coloured residue). Set it to `0x08` for the original, cleaner vendor dynamic mode (about 12.1 seconds). Only these two values are accepted. Normal ten-minute full updates keep the vendor frame-rate settings.
+
 Clock-window geometry is fixed to this 1360 × 480 layout. Changing the layout requires updating the rectangle in the sketch as well.
 
 ## Wi-Fi setup

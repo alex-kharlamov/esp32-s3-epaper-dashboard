@@ -11,5 +11,8 @@ constexpr uint32_t DASH_FULL_INTERVAL_MS = 600000;
 constexpr uint32_t DASH_BOOT_COOLDOWN_MS = 180000;
 // Set false to use full-screen fast updates between ten-minute normal refreshes.
 constexpr bool DASH_CLOCK_WINDOW_ENABLED = true;
+// Measured 5.27 s clock waveform. Small coloured residue was observed.
+// Use 0x08 for the original vendor dynamic mode (about 12.1 s, cleaner).
+constexpr uint8_t DASH_CLOCK_PLL = 0x07;
 // Verified workaround on our board. Units are quarter-dBm: 34 = 8.5 dBm.
 constexpr int8_t DASH_WIFI_TX_POWER = 34;

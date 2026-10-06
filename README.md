@@ -15,7 +15,7 @@ A wide, quiet dashboard that runs entirely on an **ESP32-S3** and a **Waveshare 
 - Hidden-password Wi-Fi setup over USB; credentials stay on the ESP32.
 - A desktop preview using the actual firmware renderer.
 
-**Measured on the tested hardware:** normal full refresh ≈ **17 seconds**; fast clock-window refresh ≈ **12.1 seconds**. The partial window limits the visible area that updates; it does not make the waveform instantaneous.
+**Measured on the tested hardware:** normal full refresh ≈ **17 seconds**; fixed-120-Hz clock-window refresh ≈ **5.27 seconds**. The partial window limits the visible area that updates; it does not make the waveform instantaneous.
 
 ## Hardware
 
@@ -90,7 +90,7 @@ flowchart LR
 
 The renderer packs four pixels into each byte. A **163,200-byte framebuffer** lives in PSRAM; glyphs and weather icons live in flash. The image is split across the display's two controllers.
 
-Every minute the firmware renders the current clock with cached weather, initializes the vendor fast waveform, transfers the frame, then selects the clock rectangle with the controller's **`0x83` partial-window register**. Both halves receive their own window. The weather, date and forecast remain visually unchanged. After BUSY releases, the firmware sends sleep commands and drives PWR LOW.
+Every minute the firmware renders the current clock with cached weather, initializes the vendor fast waveform and selects a fixed 120 Hz frame rate, transfers the frame, then selects the clock rectangle with the controller's **`0x83` partial-window register**. Both halves receive their own window. The weather, date and forecast remain visually unchanged. After BUSY releases, the firmware sends sleep commands and drives PWR LOW.
 
 Every ten minutes it fetches fresh weather and uses the normal full-screen waveform. The clock window includes only the digits; the date header updates with the full screen, including at midnight. Cached weather is retained if a request fails, with fetch time and a stale-data label on the next full refresh. Missing AQI is shown as `--`.
 
@@ -98,9 +98,11 @@ Weather and modelled air quality come from [Open-Meteo](https://open-meteo.com/)
 
 [Refresh commands, timing evidence and limitations →](docs/REFRESH.md)
 
+The faster clock mode produced **small coloured residue** in the physical test, accepted by the tester. Set `DASH_CLOCK_PLL=0x08` to return to the cleaner vendor dynamic mode (about 12.1 seconds). A two-second mode has not been established; see [the GxEPD2 comparison and speed experiment](docs/SPEED_RESEARCH.md).
+
 ## Configuration and preview
 
-[Configuration.h](ESP32S3_Dashboard/Configuration.h) controls location, timezone, refresh intervals, window mode and Wi-Fi transmit power. A tested **8.5 dBm** limit resolved repeated association failures on our board; it is a board-specific workaround, not a universal optimum.
+[Configuration.h](ESP32S3_Dashboard/Configuration.h) controls location, timezone, refresh intervals, window mode, clock frame rate and Wi-Fi transmit power. A tested **8.5 dBm** limit resolved repeated association failures on our board; it is a board-specific workaround, not a universal optimum.
 
 ```bash
 ./tools/preview.sh

@@ -1,0 +1,23 @@
+{
+  "panel": "Waveshare 10.85-inch HAT+ (G), JD79665AA x2",
+  "experiment": "One volatile R30=07 clock-window update after vendor fast initialization, followed by vendor dynamic baseline",
+  "measurements": [
+    {
+      "mode": "normal_full",
+      "uptime_ms": 181337,
+      "waveform_busy_ms": 16961
+    },
+    {
+      "mode": "clock_window_fixed_120hz",
+      "uptime_ms": 241556,
+      "waveform_busy_ms": 5270
+    },
+    {
+      "mode": "clock_window_vendor_dynamic",
+      "uptime_ms": 301776,
+      "waveform_busy_ms": 12090
+    }
+  ],
+  "visual_observation": "Small coloured residue observed; tester accepted the tradeoff.",
+  "scope": "Waveform timings exclude rendering, initialization, transfer and sleep. Single fixed-rate cycle; long-term quality and durability unvalidated. No two-second mode demonstrated."
+}

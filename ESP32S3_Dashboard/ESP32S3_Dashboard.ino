@@ -56,7 +56,10 @@ void loop() {
   Serial.printf("WINDOW_CYCLE_START: uptime=%lu ms clock=%s mode=%s\n",(unsigned long)lastDisplayStarted,data.clock,fullRefresh?"FULL":(DASH_CLOCK_WINDOW_ENABLED?"CLOCK_WINDOW":"FAST_FULL"));
   DEV_Module_Init();
   if(fullRefresh){lastFullStarted=lastDisplayStarted;EPD_10in85g_Init();}
-  else EPD_10in85g_Init_Fast();
+  else {
+    EPD_10in85g_Init_Fast();
+    if(DASH_CLOCK_WINDOW_ENABLED)EPD_10in85g_SetClockFrameRate(DASH_CLOCK_PLL);
+  }
   demoStage="dashboard transfer";
   Serial.println("Transfer UI to both controllers (81,600 bytes each)");
   if(fullRefresh)EPD_10in85g_Display(frame);

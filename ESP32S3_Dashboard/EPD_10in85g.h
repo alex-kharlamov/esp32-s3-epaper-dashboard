@@ -55,3 +55,5 @@ void EPD_10in85g_Sleep(void);
 
 
 #endif
+
+void EPD_10in85g_SetClockFrameRate(UBYTE pll);

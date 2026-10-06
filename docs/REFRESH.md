@@ -6,7 +6,8 @@
 |---|---:|---|
 | Normal full | 16.97 seconds | Whole dashboard |
 | Vendor fast full | 12.10 seconds | Whole dashboard |
-| Fast clock window | 12.09 seconds | Clock rectangle only, confirmed visually |
+| Vendor dynamic clock window | 12.09 seconds | Clock rectangle only, confirmed visually |
+| Fixed 120 Hz clock window (current default) | 5.27 seconds | Clock rectangle only; small coloured residue observed and accepted |
 
 These measure waveform BUSY duration, not complete cycle time. Rendering takes about 0.21 seconds; initialization, frame transfer and sleep add time. Consecutive minute cycles started about 60.2 seconds apart.
 
@@ -18,7 +19,7 @@ Normal full updates use Waveshare's unmodified initialization sequence. Fast mod
 
 The controller manual's printed page 40 documents `R83h` (PTL). Its nine parameters contain horizontal and vertical start/end addresses, `PTH_EN` and `PMODE`. For a clock-window update:
 
-1. Initialize the vendor fast mode.
+1. Initialize the vendor fast mode. For the faster clock setting, send `R30=07` afterward to disable dynamic frame rate and select the documented 120 Hz rate. `DASH_CLOCK_PLL=0x08` restores vendor dynamic mode.
 2. Load both complete controller SRAM images with the current clock and cached weather.
 3. Send `0x83` to each controller, enabling `PMODE=1`, with `PTH_EN=0` so source outputs follow horizontal bounds.
 4. Trigger the refresh with `0x12:0x00`, wait for BUSY to assert and release, then sleep and set PWR LOW.
@@ -40,6 +41,7 @@ A failed weather fetch keeps cached data. Network calls can delay a cycle; updat
 - Arduino compilation and upload hash verification passed.
 - One normal full refresh and two consecutive clock-window updates completed.
 - The user confirmed only the clock changed; weather, date and forecasts stayed still.
+- A fixed-120-Hz clock waveform completed in 5.270 seconds. The user observed small coloured residue and accepted it. The following vendor dynamic clock cycle took 12.090 seconds. See [speed research](SPEED_RESEARCH.md) and [the measurement record](speed-validation.json).
 - The ten-minute full-repeat timer is configured and inspected in code, but was not observed in the short capture.
 - Long-term ghosting, ageing and operation across all temperatures/panel revisions are not validated.
 
