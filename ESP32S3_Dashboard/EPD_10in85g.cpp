@@ -429,16 +429,16 @@ void EPD_10in85g_DisplayClockWindows(const UBYTE *Image,const ClockWindow *windo
         const auto &w=windows[i];unsigned endX=unsigned(w.x)+w.width-1,endY=unsigned(w.y)+w.height-1;
         // BUSY is shared: both controllers receive the refresh command. A half
         // with no changed digit gets a four-pixel white clock-padding window,
-        // never an unchanged digit. These y=40 padding pixels precede the glyphs.
+        // never an unchanged digit. These y=0 padding pixels precede the glyphs.
         if(w.x<680)EPD_10in85g_Window(0,w.x,w.y,endX<680?endX:679,endY);
         else {
-            if(Image[40*340+472/4]!=0x55)demoAbort("Clock padding is not white");
-            EPD_10in85g_Window(0,472,40,475,40);
+            if(Image[0*340+472/4]!=0x55)demoAbort("Clock padding is not white");
+            EPD_10in85g_Window(0,472,0,475,0);
         }
         if(endX>=680)EPD_10in85g_Window(1,w.x>=680?w.x-680:0,w.y,endX-680,endY);
         else {
-            if(Image[40*340+680/4]!=0x55)demoAbort("Clock padding is not white");
-            EPD_10in85g_Window(1,0,40,3,40);
+            if(Image[0*340+680/4]!=0x55)demoAbort("Clock padding is not white");
+            EPD_10in85g_Window(1,0,0,3,0);
         }
         EPD_10in85g_TurnOnDisplay();
     }

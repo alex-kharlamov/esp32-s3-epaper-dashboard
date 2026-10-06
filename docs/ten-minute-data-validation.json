@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-06",
+  "firmware": "LIVE v15 TEN-MINUTE DATA + TFL",
+  "public_and_private_builds_passed": true,
+  "upload_hash_verified": true,
+  "host_clock_and_live_data_tests_passed": true,
+  "configured_weather_tfl_batch_ms": 600000,
+  "transport_stale_seconds": 780,
+  "ordinary_minute_transport_state": "held until scheduled full refresh",
+  "observed": {
+    "startup_shared_fetch_batches": 1,
+    "weather_fetch_ok": true,
+    "tfl_lines_and_stations_ok": true,
+    "full_refreshes": 1,
+    "changed_digit_clock_refreshes": 1,
+    "automatic_colour_strip_refreshes": 0,
+    "clock_completion_offset_ms": 202,
+    "panel_asleep_and_power_low": true
+  },
+  "scope": "Startup batch, initial full redraw and subsequent clock-only minute captured. The second ten-minute batch was not observed in this short capture."
+}

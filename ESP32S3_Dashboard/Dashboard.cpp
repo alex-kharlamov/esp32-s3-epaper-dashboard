@@ -2,14 +2,16 @@
 #include "Dashboard.h"
 #include "ClockUpdate.h"
 #include "DashboardAssets.h"
+#include "SleepArtwork.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 namespace {
 uint8_t *canvas;
-constexpr int BLACK=0,WHITE=1;
+constexpr int BLACK=0,WHITE=1,YELLOW=2,RED=3;
 void pixel(int x,int y,int c=BLACK) {
   if(x<0 || x>=DASH_WIDTH || y<0 || y>=DASH_HEIGHT)return;
   int i=y*340+x/4,s=6-2*(x%4);
@@ -18,9 +20,9 @@ void pixel(int x,int y,int c=BLACK) {
 void fill(int x,int y,int w,int h,int c=BLACK) {
   for(int j=y;j<y+h;j++)for(int i=x;i<x+w;i++)pixel(i,j,c);
 }
-void line(int x0,int y0,int x1,int y1,int width=2) {
+void line(int x0,int y0,int x1,int y1,int width=2,int c=BLACK) {
   int dx=abs(x1-x0),sx=x0<x1?1:-1,dy=-abs(y1-y0),sy=y0<y1?1:-1,err=dx+dy;
-  for(;;){fill(x0,y0,width,width);if(x0==x1 && y0==y1)break;int e=2*err;if(e>=dy){err+=dy;x0+=sx;}if(e<=dx){err+=dx;y0+=sy;}}
+  for(;;){fill(x0,y0,width,width,c);if(x0==x1 && y0==y1)break;int e=2*err;if(e>=dy){err+=dy;x0+=sx;}if(e<=dx){err+=dx;y0+=sy;}}
 }
 void box(int x,int y,int w,int h,int width=2) {
   fill(x,y,w,width);fill(x,y+h-width,w,width);fill(x,y,width,h);fill(x+w-width,y,width,h);
@@ -60,94 +62,187 @@ void icon(int x,int y,const char *name,int size) {
   }
   box(x,y,size,size);
 }
-void clockRow(int x,int y,int width,int height,const char *value) {
-  // Fit and centre the complete HH:MM string, preserving the LED dot aspect.
-  int top=10000,bottom=-10000,total=textWidth(value,font180);
-  for(const char *c=value;*c;c++){const Glyph &g=glyph(font180,*c);if(g.y<top)top=g.y;if(g.y+g.h>bottom)bottom=g.y+g.h;}
-  if(total<=0 || bottom<=top)return;
-  float scale=float(width)/total;if((bottom-top)*scale>height)scale=float(height)/(bottom-top);
-  float cursor=x+(width-total*scale)/2;int base=y+int((height-(bottom-top)*scale)/2-top*scale);
-  for(const char *c=value;*c;c++){
+// Outline icons use solid native pigment values; only the sun is yellow.
+void disc(int x,int y,int radius,int c) {
+  for(int j=-radius;j<=radius;j++)for(int i=-radius;i<=radius;i++)
+    if(i*i+j*j<=radius*radius)pixel(x+i,y+j,c);
+}
+void sun(int x,int y,int size) {
+  int cx=x+size/2,cy=y+size/2,r=size/4;
+  disc(cx,cy,r,YELLOW);
+  for(int i=0;i<8;i++) {
+    float angle=i*3.14159265f/4;
+    int a=size*34/100,b=size*46/100;
+    line(cx+int(cos(angle)*a),cy+int(sin(angle)*a),cx+int(cos(angle)*b),cy+int(sin(angle)*b),size>90?4:3,YELLOW);
+  }
+}
+bool cloudMask(int u,int v) {
+  auto circle=[&](int x,int y,int r){return (u-x)*(u-x)+(v-y)*(v-y)<=r*r;};
+  return circle(30,53,20) || circle(50,40,25) || circle(71,54,19) || (u>=29 && u<=73 && v>=50 && v<=73);
+}
+void weatherIcon(int x,int y,const char *name,int size) {
+  bool clear=!strcmp(name,"icon_sun"),partly=!strcmp(name,"icon_partly-cloudy-day");
+  bool cloudy=!strcmp(name,"icon_clouds"),rain=!strcmp(name,"icon_rain") || !strcmp(name,"icon_heavy_rain");
+  if(clear){sun(x,y,size);return;}
+  if(!partly && !cloudy && !rain){icon(x,y,name,size);return;}
+  if(partly)sun(x+size*42/100,y-size*13/100,size*68/100);
+  for(int j=0;j<size;j++)for(int i=0;i<size;i++) {
+    int u=i*100/size,v=j*100/size;
+    if(!cloudMask(u,v))continue;
+    bool edge=!cloudMask(u-4,v)||!cloudMask(u+4,v)||!cloudMask(u,v-4)||!cloudMask(u,v+4);
+    pixel(x+i,y+j,edge?BLACK:WHITE);
+  }
+  if(rain)for(int i=0;i<3;i++) {
+    int cx=x+size*(31+i*21)/100;
+    line(cx,y+size*81/100,cx-size*5/100,y+size*92/100,size>90?4:3);
+  }
+}
+void transportIndicator(int x,const char *name,ServiceHealth health) {
+  int background=health==ServiceHealth::Issue?RED:health==ServiceHealth::Notice?YELLOW:WHITE;
+  int ink=background==RED?WHITE:BLACK;
+  fill(x,252,680,44,background);
+  if(health==ServiceHealth::Good){line(x+17,272,x+24,279,3,ink);line(x+24,279,x+37,263,3,ink);}
+  else text(x+20,258,health==ServiceHealth::Issue || health==ServiceHealth::Notice?"!":"?",font28,ink,22);
+  const char *status=health==ServiceHealth::Good?"GOOD":health==ServiceHealth::Notice?"NOTICE":health==ServiceHealth::Issue?"ISSUE":health==ServiceHealth::Stale?"OLD":"UNKNOWN";
+  int statusWidth=textWidth(status,font24);
+  text(x+49,259,name,font24,ink,680-65-statusWidth-20);
+  text(x+660-statusWidth,259,status,font24,ink);
+}
+struct ClockGeometry {
+  int top,bottom,total,base;
+  float scale,left;
+};
+ClockGeometry clockGeometry() {
+  // Measure the complete digit repertoire once, not the current time. Both
+  // advances and vertical bounds stay stable across every minute transition.
+  int top=10000,bottom=-10000;
+  for(const char *c="0123456789:";*c;c++) {
+    const Glyph &g=glyph(font180,*c);
+    if(g.y<top)top=g.y;if(g.y+g.h>bottom)bottom=g.y+g.h;
+  }
+  int total=textWidth("00:00",font180);
+  float scale=float(867)/total;
+  if((bottom-top)*scale>236)scale=float(236)/(bottom-top);
+  float left=473+(867-total*scale)/2;
+  int base=8+int((236-(bottom-top)*scale)/2-top*scale);
+  return {top,bottom,total,base,scale,left};
+}
+void clockRow(const char *value) {
+  const auto m=clockGeometry();float cursor=m.left;
+  for(const char *c=value;*c;c++) {
     const Glyph &g=glyph(font180,*c);int stride=(g.w+7)/8;
-    int w=int(g.w*scale),h=int(g.h*scale);
-    for(int j=0;j<h;j++)for(int i=0;i<w;i++){
-      int sx=int(i/scale),sy=int(j/scale);
-      if(font180.bits[g.offset+sy*stride+sx/8]&(0x80>>(sx%8)))pixel(int(cursor+g.x*scale)+i,base+int(g.y*scale)+j);
+    int w=int(g.w*m.scale),h=int(g.h*m.scale);
+    for(int j=0;j<h;j++)for(int i=0;i<w;i++) {
+      int sx=int(i/m.scale),sy=int(j/m.scale);
+      if(font180.bits[g.offset+sy*stride+sx/8]&(0x80>>(sx%8)))
+        pixel(int(cursor+g.x*m.scale)+i,m.base+int(g.y*m.scale)+j);
     }
-    cursor+=g.advance*scale;
+    cursor+=g.advance*m.scale;
   }
 }
-void compass(int cx,int cy,int direction,float speed) {
-  const float rad=3.14159265359f/180;
-  for(int a=0;a<360;a++){int x=cx+int(round(60*cos(a*rad))),y=cy+int(round(60*sin(a*rad)));fill(x,y,2,2);}
-  for(int a=0;a<360;a+=45){int r=a%90==0?52:56;line(cx+int(r*cos(a*rad)),cy+int(r*sin(a*rad)),cx+int(60*cos(a*rad)),cy+int(60*sin(a*rad)));}
-  text(cx-8,cy-82,"N",font20);text(cx-8,cy+64,"S",font20);text(cx+66,cy-10,"E",font20);text(cx-84,cy-10,"W",font20);
-  float a=(direction-90)*rad;
-  int tx=cx+int(48*cos(a)),ty=cy+int(48*sin(a));
-  int lx=cx+int(20*cos(a+150*rad)),ly=cy+int(20*sin(a+150*rad));
-  int rx=cx+int(20*cos(a-150*rad)),ry=cy+int(20*sin(a-150*rad));
-  // Fill the triangular arrow with scanline interpolation.
-  for(int y=cy-60;y<=cy+60;y++){
-    int xs[3],n=0;int vx[]={tx,lx,rx},vy[]={ty,ly,ry};
-    for(int i=0;i<3;i++){int j=(i+1)%3;if((vy[i]<=y && y<vy[j])||(vy[j]<=y && y<vy[i]))xs[n++]=vx[i]+(y-vy[i])*(vx[j]-vx[i])/(vy[j]-vy[i]);}
-    if(n>=2){if(xs[0]>xs[1]){int t=xs[0];xs[0]=xs[1];xs[1]=t;}fill(xs[0],y,xs[1]-xs[0]+1,1);}
+void upperCopy(char *out,int length,const char *value) {
+  int i=0;for(;value && value[i] && i<length-1;i++) {
+    char c=value[i];out[i]=(c>='a' && c<='z')?c-'a'+'A':c;
   }
-  char s[24];snprintf(s,sizeof(s),"%.1f km/h",speed);text(cx-textWidth(s,font20)/2,cy+25,s,font20);
+  out[i]=0;
 }
+const char *condition(const char *name) {
+  if(!strcmp(name,"icon_sun"))return "CLEAR";
+  if(!strcmp(name,"icon_night"))return "CLEAR NIGHT";
+  if(!strcmp(name,"icon_partly-cloudy-day"))return "PARTLY CLOUDY";
+  if(!strcmp(name,"icon_clouds"))return "CLOUDY";
+  if(!strcmp(name,"icon_rain"))return "RAIN";
+  if(!strcmp(name,"icon_heavy_rain"))return "HEAVY RAIN";
+  if(!strcmp(name,"icon_snow"))return "SNOW";
+  if(!strcmp(name,"icon_storm"))return "THUNDERSTORM";
+  if(!strcmp(name,"icon_windy"))return "WINDY";
+  return "WEATHER";
 }
+const char *healthLabel(ServiceHealth state) {
+  switch(state) {
+    case ServiceHealth::Good:return "OK";
+    case ServiceHealth::Notice:return "NOTICE";
+    case ServiceHealth::Issue:return "ISSUE";
+    case ServiceHealth::Stale:return "OLD";
+    default:return "?";
+  }
+}
+
+}
+void renderSleepScreen(uint8_t *buffer) {
+  canvas=buffer;memset(canvas,0x55,DASH_BYTES);
+  for(int y=0;y<SLEEP_ART_HEIGHT;y++)for(int x=0;x<SLEEP_ART_WIDTH;x++) {
+    int i=y*(SLEEP_ART_WIDTH/4)+x/4,shift=6-2*(x%4);
+    pixel(24+x,y,(sleepArtwork[i]>>shift)&3);
+  }
+  centeredText(1030,115,"GOOD NIGHT",font60,590);
+  centeredText(1030,202,"A LITTLE REST",font35,560);
+  centeredText(1030,267,"BACK AT 07:00",font35,560);
+  centeredText(680,421,"WEATHER AND TFL WILL RESUME IN THE MORNING",font20,1260);
+}
+
 void renderDashboard(uint8_t *buffer,const DashboardData &d) {
-  canvas=buffer;memset(canvas,0x55,DASH_BYTES);char s[100];
-  // Current weather occupies one third; a single-row clock occupies two thirds.
-  icon(20,20,d.weatherIcon,90);
-  snprintf(s,sizeof(s),"%d°C",d.temperature);text(120,10,s,font80,BLACK,210);
-  centeredText(386,8,"WIND",font20,92);
-  if(d.windSpeed<0)snprintf(s,sizeof(s),"--");else snprintf(s,sizeof(s),"%.1f",d.windSpeed);
-  centeredText(386,27,s,font60,92);centeredText(386,95,"km/h",font14,92);
-  snprintf(s,sizeof(s),"Humidity: %d%%",d.humidity);text(120,95,s,font20);
-  snprintf(s,sizeof(s),"Press: %d hPa",d.pressure);text(120,120,s,font20);line(20,150,433,150);
-  icon(25,165,"icon_wind",30);compass(100,240,d.windDirection,d.windSpeed);
-  text(200,170,"AIR QUALITY",font20);text(200,215,"AQI:",font28);
-  if(d.aqi<0)snprintf(s,sizeof(s),"--");else snprintf(s,sizeof(s),"%d",d.aqi);int aw=textWidth(s,font80);
-  if(d.aqi>=50){fill(265,240,(aw>140?140:aw)+30,68);text(280,225,s,font80,WHITE,140);}else text(280,225,s,font80,BLACK,140);
-  line(453,10,453,322);
+  canvas=buffer;memset(canvas,0x55,DASH_BYTES);char s[180],label[100];
+  upperCopy(label,sizeof(label),d.location);text(20,0,label,font60,BLACK,420);
+  snprintf(s,sizeof(s),"%s %s",d.weekday,d.date);upperCopy(label,sizeof(label),s);
+  text(20,55,label,font24,BLACK,420);
+  if(d.weatherAvailable)snprintf(s,sizeof(s),"%d°C",d.temperature);else snprintf(s,sizeof(s),"--°C");
+  text(180,86,s,font120,BLACK,260);
+  if(d.weatherAvailable)weatherIcon(28,88,d.weatherIcon,120);
+  char weatherLabel[64];
+  snprintf(weatherLabel,sizeof(weatherLabel),"%s",d.weatherAvailable?condition(d.weatherIcon):"WEATHER UNAVAILABLE");
+  char *secondWord=strchr(weatherLabel,' ');
+  if(secondWord) {
+    *secondWord++=0;
+    text(180,188,weatherLabel,font35,BLACK,260);
+    text(180,219,secondWord,font35,BLACK,260);
+  }else text(180,203,weatherLabel,font35,BLACK,260);
+  static const char *directions[]={"N","NE","E","SE","S","SW","W","NW"};
+  int direction=((d.windDirection%360)+360)%360;
+  if(d.windSpeed<0)snprintf(s,sizeof(s),"-- km/h");
+  else snprintf(s,sizeof(s),"%s %.0f km/h",directions[((direction+22)/45)%8],d.windSpeed);
+  icon(18,213,"icon_wind",30);text(52,215,s,font24,BLACK,120);
+  line(453,8,453,244,1);
+  if(!strcmp(d.clock,"--:--"))centeredText(906,95,"TIME WAITING",font60,830);
+  else clockRow(d.clock);
 
-  snprintf(s,sizeof(s),"%s  /  %s",d.date,d.weekday);
-  int dateWidth=textWidth(s,font24);if(dateWidth>850)dateWidth=850;
-  text(473+(867-dateWidth)/2,6,s,font24,BLACK,850);
-  clockRow(473,43,867,279,d.clock);
-
-  // Forecast replaces the progress bars and runs across both top regions.
-  line(20,326,1340,326);
-  for(int i=0;i<8;i++){
-    int x=20+i*165,center=x+82;
-    centeredText(center,330,d.forecast[i].time,font24,149);
-    icon(center-40,359,d.forecast[i].icon,80);
+  transportIndicator(0,"EAST INDIA / DLR",journeyHealth(d.dlr,d.eastIndia));
+  transportIndicator(680,"CANNING TOWN / JUBILEE",journeyHealth(d.jubilee,d.canningTown));
+  line(0,252,1359,252,1);line(0,295,1359,295,1);
+  for(int i=0;i<8;i++) {
+    int x=i*170,center=x+85;
+    centeredText(center,304,d.forecast[i].time,font24,158);
+    if(i>0)line(x,308,x,454,1);
+    if(d.forecast[i].available)weatherIcon(center-40,336,d.forecast[i].icon,80);
+    else centeredText(center,365,"--",font28,150);
     int rain=d.forecast[i].rainProbability;if(rain<0)rain=0;if(rain>100)rain=100;
-    snprintf(s,sizeof(s),"%d°C / %d%%",d.forecast[i].temperature,rain);
-    centeredText(center,441,s,font20,149);
+    char temp[24],chance[16];
+    if(d.forecast[i].available){snprintf(temp,sizeof(temp),"%d° / ",d.forecast[i].temperature);snprintf(chance,sizeof(chance),"%d%%",rain);}
+    else {snprintf(temp,sizeof(temp),"--° / ");snprintf(chance,sizeof(chance),"--%%");}
+    int tw=textWidth(temp,font24),cw=textWidth(chance,font24),left=center-(tw+cw)/2;
+    if(d.forecast[i].available && rain>=40)fill(left+tw-2,426,cw+4,26,YELLOW);
+    text(left,423,temp,font24);text(left+tw,423,chance,font24);
   }
-  if(d.statusText)text(20,463,d.statusText,font14,BLACK,1320);
-  else if(d.sampleData)text(20,463,"SAMPLE DATA  /  ESP32-S3  /  FORECAST: °C / RAIN CHANCE",font14);
+  line(0,459,1359,459,1);
+  const char *footer=d.statusText?d.statusText:(d.sampleData?"SAMPLE DATA":"WEATHER UNAVAILABLE");
+  text(20,464,footer,font14,BLACK,1100);
+  if(d.transportCheckedAt){time_t checked=d.transportCheckedAt;tm local{};localtime_r(&checked,&local);strftime(s,sizeof(s),"TfL %H:%M",&local);}
+  else snprintf(s,sizeof(s),d.sampleData?"TfL 12:33 / SAMPLE":"TfL --:--");
+  text(1340-textWidth(s,font14),464,s,font14);
 }
 
 int changedClockWindows(const char *previous,const char *current,ClockWindow windows[4]) {
   if(!previous || !current || strlen(previous)!=5 || strlen(current)!=5 || previous[2]!=':' || current[2]!=':') {
-    windows[0]={472,40,868,284};return 1;
+    windows[0]=CLOCK_AREA;return 1;
   }
-  // Same metrics as clockRow. These LED digits have equal advances and bounds.
-  int top=10000,bottom=-10000,total=textWidth(current,font180);
-  for(int i=0;i<5;i++) {
-    const Glyph &g=glyph(font180,current[i]);
-    if(g.y<top)top=g.y;if(g.y+g.h>bottom)bottom=g.y+g.h;
-  }
-  float scale=float(867)/total;if((bottom-top)*scale>279)scale=float(279)/(bottom-top);
-  float cursor=473+(867-total*scale)/2;
+  const auto m=clockGeometry();
+  float cursor=m.left;float scale=m.scale;
   int count=0,lastChanged=-2;
   for(int i=0;i<5;i++) {
     const Glyph &g=glyph(font180,current[i]);
     if(i!=2 && previous[i]!=current[i]) {
       int left=int(floor(cursor))&~3,right=(int(ceil(cursor+g.advance*scale))+3)&~3;
-      ClockWindow window={uint16_t(left),40,uint16_t(right-left),284};
+      ClockWindow window={uint16_t(left),CLOCK_AREA.y,uint16_t(right-left),CLOCK_AREA.height};
       if(lastChanged==i-1) windows[count-1].width=right-windows[count-1].x;
       else windows[count++]=window;
       lastChanged=i;

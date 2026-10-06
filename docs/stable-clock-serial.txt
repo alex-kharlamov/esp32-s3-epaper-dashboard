@@ -1,0 +1,80 @@
+ESP32-S3 Dashboard LIVE v16 STABLE NTP CLOCK; built Oct  6 2026 14:19:14
+UI: compact two-journey colour dashboard / changed-digit clock
+Live weather and time; no fictional fallback will be displayed.
+WEATHER_CACHE_RESTORED: fetched_epoch=1791292393 hours=48
+Connecting using existing ESP32 Wi-Fi configuration; credentials are not logged.
+LIVE: London / timezone=GMT0BST,M3.5.0/1,M10.5.0; clock=60000 ms, full/weather=600000 ms.
+If Wi-Fi is not configured, run tools/wifi_setup.py locally over USB.
+DATA_BATCH: weather + TfL; interval=10 minutes
+WEATHER_FETCH_OK: temperature=19 wind=1.8 hours=48; CACHE_SAVED
+TFL_FETCH: lines=OK stations=OK DLR=1 Jubilee=1 CanningTown=2 EastIndia=1
+NTP_SYNC: epoch=1791292840.718213
+CLOCK_SCHEDULE: target_epoch_ms=1791292980000 start_epoch_ms=1791292999408 lead_ms=21000
+Native UI rendered: 1360x480, 163200 bytes, 223 ms
+WINDOW_CYCLE_START: uptime=180231 ms clock=14:23 mode=FULL
+BUSY wait: reset, level=1 (LOW=busy)
+BUSY released: reset after 10 ms
+BUSY wait: power on, level=1 (LOW=busy)
+BUSY released: power on after 10 ms
+DISPLAY_PHASE: NORMAL_COLOUR, 0 window(s)
+Write CS_M / left controller
+Write CS_S / right controller
+Refresh start
+BUSY wait: refresh, level=0 (LOW=busy)
+BUSY released: refresh after 16961 ms
+Refresh complete after 16961 ms (image needs visual confirmation)
+Entering display sleep
+BUSY wait: sleep power off, level=1 (LOW=busy)
+BUSY released: sleep power off after 10 ms
+CLOCK_COMPLETE: target_epoch_ms=1791292980000 finish_epoch_ms=1791293020034 offset_ms=40034 cycle_ms=20626
+LIVE_REFRESH_DONE: refresh completed; panel asleep, PWR LOW.
+DISPLAY_DIRTY: 14:23 -> 14:24, 1 window(s)
+CLOCK_SCHEDULE: target_epoch_ms=1791293040000 start_epoch_ms=1791293031231 lead_ms=8770
+Native UI rendered: 1360x480, 163200 bytes, 223 ms
+WINDOW_CYCLE_START: uptime=212053 ms clock=14:24 mode=CLOCK_WINDOW
+BUSY wait: reset, level=1 (LOW=busy)
+BUSY released: reset after 10 ms
+BUSY wait: power on, level=1 (LOW=busy)
+BUSY released: power on after 10 ms
+BUSY wait: power on, level=0 (LOW=busy)
+BUSY released: power on after 30 ms
+CLOCK_PLL: 0x07 (fixed 120 Hz)
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+Write CS_M / left controller
+Write CS_S / right controller
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+Refresh start
+BUSY wait: refresh, level=0 (LOW=busy)
+BUSY released: refresh after 5270 ms
+Refresh complete after 5270 ms (image needs visual confirmation)
+Entering display sleep
+BUSY wait: sleep power off, level=1 (LOW=busy)
+BUSY released: sleep power off after 10 ms
+CLOCK_COMPLETE: target_epoch_ms=1791293040000 finish_epoch_ms=1791293040196 offset_ms=196 cycle_ms=8965
+LIVE_REFRESH_DONE: refresh completed; panel asleep, PWR LOW.
+DISPLAY_DIRTY: 14:24 -> 14:25, 1 window(s)
+CLOCK_SCHEDULE: target_epoch_ms=1791293100000 start_epoch_ms=1791293091044 lead_ms=8965
+Native UI rendered: 1360x480, 163200 bytes, 223 ms
+WINDOW_CYCLE_START: uptime=271867 ms clock=14:25 mode=CLOCK_WINDOW
+BUSY wait: reset, level=1 (LOW=busy)
+BUSY released: reset after 10 ms
+BUSY wait: power on, level=1 (LOW=busy)
+BUSY released: power on after 10 ms
+BUSY wait: power on, level=0 (LOW=busy)
+BUSY released: power on after 30 ms
+CLOCK_PLL: 0x07 (fixed 120 Hz)
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+Write CS_M / left controller
+Write CS_S / right controller
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+Refresh start
+BUSY wait: refresh, level=0 (LOW=busy)
+BUSY released: refresh after 5270 ms
+Refresh complete after 5270 ms (image needs visual confirmation)
+Entering display sleep
+BUSY wait: sleep power off, level=1 (LOW=busy)
+BUSY released: sleep power off after 10 ms
+CLOCK_COMPLETE: target_epoch_ms=1791293100000 finish_epoch_ms=1791293100010 offset_ms=10 cycle_ms=8966
+LIVE_REFRESH_DONE: refresh completed; panel asleep, PWR LOW.

@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-06",
+  "firmware": "LIVE v13 COMPACT COLOUR + TFL",
+  "builds": [
+    "public defaults",
+    "private location"
+  ],
+  "sketch_bytes": 1300159,
+  "static_ram_bytes": 50276,
+  "upload_hash_verified": true,
+  "weather_cache_restored": true,
+  "ntp_sync_observed": true,
+  "live_tfl": {
+    "east_india_dlr": "GOOD",
+    "canning_town_jubilee": "NOTICE"
+  },
+  "colour_repaint": {
+    "cycle_ms": 20391,
+    "waveform_ms": 16950,
+    "window": {
+      "x": 0,
+      "y": 252,
+      "width": 1360,
+      "height": 44
+    },
+    "followed_by_fast_clock": true,
+    "used_real_live_status": true
+  },
+  "cycles": [
+    {
+      "target_epoch_ms": 1791291180000,
+      "finish_epoch_ms": 1791291219266,
+      "offset_ms": 39266,
+      "cycle_ms": 20634,
+      "clock": "13:53",
+      "mode": "FULL"
+    },
+    {
+      "target_epoch_ms": 1791291240000,
+      "finish_epoch_ms": 1791291240201,
+      "offset_ms": 201,
+      "cycle_ms": 8963,
+      "clock": "13:54",
+      "mode": "CLOCK_WINDOW"
+    },
+    {
+      "target_epoch_ms": 1791291300000,
+      "finish_epoch_ms": 1791291300017,
+      "offset_ms": 17,
+      "cycle_ms": 8964,
+      "clock": "13:55",
+      "mode": "CLOCK_WINDOW"
+    },
+    {
+      "target_epoch_ms": 1791291360000,
+      "finish_epoch_ms": 1791291359910,
+      "offset_ms": -90,
+      "cycle_ms": 29356,
+      "clock": "13:56",
+      "mode": "COLOUR_WINDOW"
+    },
+    {
+      "target_epoch_ms": 1791291420000,
+      "finish_epoch_ms": 1791291420191,
+      "offset_ms": 191,
+      "cycle_ms": 9145,
+      "clock": "13:57",
+      "mode": "CLOCK_WINDOW"
+    }
+  ],
+  "host_tests": {
+    "daily_clock_transitions": 1440,
+    "journey_status_transitions": 50,
+    "clock_pixels_monochrome": true,
+    "inactive_controller_padding_white": true,
+    "cache_and_offline_tests_passed": true
+  },
+  "user_confirmed": {
+    "layout_correct": true,
+    "minute_weather_and_strip_still": true,
+    "normal_colour_repaint_weather_and_forecast_still": true,
+    "white_yellow_strip_clean": true
+  },
+  "limitations": [
+    "Normal-colour repaint of both indicators was observed; individual half-strip transitions and a red live disruption were covered by host rendering tests, not induced on the board.",
+    "NTP offsets measure cycle completion against the ESP32 clock, without external optical timing."
+  ]
+}

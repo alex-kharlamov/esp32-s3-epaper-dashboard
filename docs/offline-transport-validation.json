@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-06",
+  "firmware": "LIVE v12 OFFLINE + TFL / Field Journal",
+  "upload_verified": true,
+  "sketch_bytes": 1339387,
+  "static_ram_bytes": 50252,
+  "cache_restored_before_wifi": true,
+  "cache_hours": 48,
+  "live_weather_saved": true,
+  "ntp_sync_observed": true,
+  "tfl": {
+    "lines_request": "OK",
+    "stations_request": "OK",
+    "dlr": "OK",
+    "jubilee": "OK",
+    "canning_town": "NOTICE",
+    "east_india": "OK"
+  },
+  "startup_full": {
+    "target_epoch_ms": 1791288300000,
+    "finish_epoch_ms": 1791288337839,
+    "offset_ms": 37839,
+    "cycle_ms": 20609
+  },
+  "minute_updates": [
+    {
+      "target_epoch_ms": 1791288360000,
+      "finish_epoch_ms": 1791288360033,
+      "offset_ms": 33,
+      "cycle_ms": 8940
+    },
+    {
+      "target_epoch_ms": 1791288420000,
+      "finish_epoch_ms": 1791288420018,
+      "offset_ms": 18,
+      "cycle_ms": 8938
+    }
+  ],
+  "minute_windows": [
+    1,
+    1
+  ],
+  "host_checks": [
+    "cache version, size, checksum, location and corrupt-record rejection",
+    "real weather and TfL response parsing",
+    "clock with no weather, cold offline placeholder and expired forecast slots",
+    "future and expired disruptions, unavailable and stale transport states",
+    "pixel coverage of header-only changes",
+    "all 1440 clock minute transitions"
+  ],
+  "limitations": [
+    "Cache restored on a connected-board restart; offline rendering was tested on the host.",
+    "Timing measures completed refresh relative to ESP32 NTP time, without external optical measurement.",
+    "No live transport status transition occurred during this capture; header dirty-region coverage was tested on the host.",
+    "Physical readability confirmation is pending."
+  ]
+}

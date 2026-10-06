@@ -1,0 +1,57 @@
+WEATHER_CACHE_RESTORED: fetched_epoch=1791291009 hours=48
+WEATHER_FETCH_OK: temperature=18 wind=1.4 hours=48; CACHE_SAVED
+TFL_FETCH: lines=OK stations=OK DLR=1 Jubilee=1 CanningTown=2 EastIndia=1
+NTP_SYNC: epoch=1791291039.106121
+TFL_FETCH: lines=OK stations=OK DLR=1 Jubilee=1 CanningTown=2 EastIndia=1
+TFL_FETCH: lines=OK stations=OK DLR=1 Jubilee=1 CanningTown=2 EastIndia=1
+CLOCK_SCHEDULE: target_epoch_ms=1791291180000 start_epoch_ms=1791291198632 lead_ms=21000
+Native UI rendered: 1360x480, 163200 bytes, 221 ms
+WINDOW_CYCLE_START: uptime=180231 ms clock=13:53 mode=FULL
+DISPLAY_PHASE: NORMAL_COLOUR, 0 window(s)
+CLOCK_COMPLETE: target_epoch_ms=1791291180000 finish_epoch_ms=1791291219266 offset_ms=39266 cycle_ms=20634
+LIVE_REFRESH_DONE: refresh completed; panel asleep, PWR LOW.
+TFL_FETCH: lines=OK stations=OK DLR=1 Jubilee=1 CanningTown=2 EastIndia=1
+DISPLAY_DIRTY: 13:53 -> 13:54, 1 window(s)
+CLOCK_SCHEDULE: target_epoch_ms=1791291240000 start_epoch_ms=1791291231238 lead_ms=8770
+Native UI rendered: 1360x480, 163200 bytes, 221 ms
+WINDOW_CYCLE_START: uptime=212836 ms clock=13:54 mode=CLOCK_WINDOW
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791291240000 finish_epoch_ms=1791291240201 offset_ms=201 cycle_ms=8963
+LIVE_REFRESH_DONE: refresh completed; panel asleep, PWR LOW.
+TFL_FETCH: lines=OK stations=OK DLR=1 Jubilee=1 CanningTown=2 EastIndia=1
+DISPLAY_DIRTY: 13:54 -> 13:55, 1 window(s)
+CLOCK_SCHEDULE: target_epoch_ms=1791291300000 start_epoch_ms=1791291291053 lead_ms=8963
+Native UI rendered: 1360x480, 163200 bytes, 221 ms
+WINDOW_CYCLE_START: uptime=272652 ms clock=13:55 mode=CLOCK_WINDOW
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791291300000 finish_epoch_ms=1791291300017 offset_ms=17 cycle_ms=8964
+LIVE_REFRESH_DONE: refresh completed; panel asleep, PWR LOW.
+TRANSPORT_REPAINT_REQUESTED: same live values, normal colour waveform.
+DISPLAY_DIRTY: 13:55 -> 13:56, 2 window(s)
+CLOCK_SCHEDULE: target_epoch_ms=1791291360000 start_epoch_ms=1791291330555 lead_ms=29464
+Native UI rendered: 1360x480, 163200 bytes, 222 ms
+WINDOW_CYCLE_START: uptime=312154 ms clock=13:56 mode=COLOUR_WINDOW
+DISPLAY_PHASE: NORMAL_COLOUR, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=0..679 y=252..295
+PARTIAL_WINDOW: controller=1 x=0..679 y=252..295
+TFL_FETCH: lines=OK stations=OK DLR=1 Jubilee=1 CanningTown=2 EastIndia=1
+COLOUR_PHASE_COMPLETE: cycle_ms=20391 wave_ms=16950
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791291360000 finish_epoch_ms=1791291359910 offset_ms=-90 cycle_ms=29356
+LIVE_REFRESH_DONE: refresh completed; panel asleep, PWR LOW.
+DISPLAY_DIRTY: 13:56 -> 13:57, 1 window(s)
+CLOCK_SCHEDULE: target_epoch_ms=1791291420000 start_epoch_ms=1791291411047 lead_ms=8965
+Native UI rendered: 1360x480, 163200 bytes, 256 ms
+WINDOW_CYCLE_START: uptime=392680 ms clock=13:57 mode=CLOCK_WINDOW
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+TFL_FETCH: lines=OK stations=OK DLR=1 Jubilee=1 CanningTown=2 EastIndia=1
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791291420000 finish_epoch_ms=1791291420191 offset_ms=191 cycle_ms=9145
+LIVE_REFRESH_DONE: refresh completed; panel asleep, PWR LOW.

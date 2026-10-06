@@ -1,6 +1,6 @@
 # ESP32-S3 e-paper clock & weather
 
-A wide, quiet dashboard that runs entirely on an **ESP32-S3** and a **Waveshare 10.85-inch four-colour e-Paper HAT+ (G)**. No Raspberry Pi, browser renderer or server is needed: the ESP32 draws the screen, fetches weather over Wi-Fi, and keeps time with NTP.
+A wide, quiet dashboard that runs entirely on an **ESP32-S3** and a **Waveshare 10.85-inch four-colour e-Paper HAT+ (G)**. No Raspberry Pi, browser renderer or server is needed: the ESP32 draws the screen, fetches weather over Wi-Fi, and keeps time with NTP, and shows two TfL journey indicators.
 
 ![Native dashboard preview: current weather, large single-row clock and eight hourly forecasts](docs/images/dashboard-preview.png)
 
@@ -9,9 +9,13 @@ A wide, quiet dashboard that runs entirely on an **ESP32-S3** and a **Waveshare 
 ## What you get
 
 - A huge single-row clock with date and automatic daylight-saving time.
-- Current temperature, humidity, pressure, wind speed and US AQI.
+- Current temperature, weather condition, and wind direction/speed.
 - Eight hourly forecasts with **temperature / rain probability** beneath larger weather icons.
 - A changed-digit clock update every minute, with a normal full refresh and fresh weather every ten minutes.
+- A sleeping-squirrel screen from midnight to 07:00 London time, with display and weather/TfL updates paused. [Night mode →](docs/NIGHT_MODE.md)
+- Weather-independent clock startup and a validated last-good forecast saved across restarts.
+- Two compact journey indicators: **East India / DLR** and **Canning Town / Jubilee**, combining line and station status.
+- Native yellow sunshine and rain-probability highlights; yellow station notices and red disruption indicators.
 - Hidden-password Wi-Fi setup over USB; credentials stay on the ESP32.
 - A desktop preview using the actual firmware renderer.
 
@@ -81,8 +85,12 @@ The firmware waits **180 seconds after boot** before driving the panel. Its firs
 flowchart LR
     NTP[Network time] --> Clock[Local clock and DST]
     API[Open-Meteo HTTPS] --> Cache[Weather cache]
+    TfL[TfL HTTPS] --> Transport[Line and station status]
     Clock --> Renderer[Native C++ renderer]
     Cache --> Renderer
+    Transport --> Renderer
+    Clock --> Quiet[Midnight to 07:00 quiet gate]
+    Quiet --> Renderer
     Renderer --> Frame[Two-bit PSRAM framebuffer]
     Frame --> SPI[Two chip selects over SPI]
     SPI --> Panel[Two display controllers]
@@ -90,11 +98,15 @@ flowchart LR
 
 The renderer packs four pixels into each byte. A **163,200-byte framebuffer** lives in PSRAM; glyphs and weather icons live in flash. The image is split across the display's two controllers.
 
-Every minute the firmware renders the current clock with cached weather, initializes the vendor fast waveform and selects a fixed 120 Hz frame rate, transfers the frame, then compares `HH:MM` with the last successfully displayed time and selects only changed digit groups with the controller's **`0x83` partial-window register**. Adjacent changed digits share a window. Separate hour/minute groups use separate waveform passes, preserving the colon and unchanged digits. The weather, date and forecast remain visually unchanged. After BUSY releases, the firmware sends sleep commands and drives PWR LOW.
+Every minute the firmware compares `HH:MM` with the last successfully displayed time and selects only changed digit groups. It renders the dashboard in memory, initializes the vendor fast waveform at a fixed 120 Hz frame rate, then transfers the selected regions using the controller's **`0x83` partial-window register**. Adjacent changed digits share a window. Separate hour/minute groups use separate waveform passes, preserving the colon and unchanged digits. The weather, date and forecast remain visually unchanged. After BUSY releases, the firmware sends sleep commands and drives PWR LOW.
 
-Weather is fetched every ten minutes using an early-minute opportunity; the normal full-screen waveform shows the current cache on each ten-minute full update. Minute windows include only changed digit groups; the date header updates with the full screen, including at midnight. Cached weather is retained if a request fails, with fetch time and a stale-data label on the next full refresh. Missing AQI is shown as `--`.
+Weather is fetched every ten minutes by a background task, independently of rendering. A versioned, checksummed NVS snapshot restores the last good weather after a restart; upcoming forecasts are selected by their original UTC timestamps, with expired slots left unavailable. The clock can start even if weather has never arrived, and a cold boot without valid time shows `TIME WAITING`. Cached weather keeps its original timestamp and an explicit cached/stale label.
 
-Weather and modelled air quality come from [Open-Meteo](https://open-meteo.com/). NTP synchronizes time every 15 minutes, and a POSIX timezone rule handles daylight saving. Clock updates are aligned to wall-clock minute boundaries, with measured refresh latency used to start the upcoming minute’s image early so it settles near the boundary. HTTPS verifies certificates and hostnames using the ESP32's built-in CA bundle. Wi-Fi credentials are stored in NVS on the board, which is **not encrypted at rest** in this development build.
+The background task fetches TfL alongside weather in one ten-minute batch. Two indicators combine line-wide service with the relevant station: East India / DLR and Canning Town / Jubilee (Underground notices only). Weather and transport are displayed together on the scheduled ten-minute full refresh; ordinary minute updates change only clock digits. Unavailable or stale transport data is labelled at the next full refresh. The explicit USB repaint diagnostic remains available. [Offline behavior, indicator meanings and tests →](docs/OFFLINE_TRANSPORT.md) [Compact colour layout and partial updates →](docs/COMPACT_COLOUR.md)
+
+Weather comes from [Open-Meteo](https://open-meteo.com/). NTP synchronizes time every 15 minutes, and a POSIX timezone rule handles daylight saving. Clock updates are aligned to wall-clock minute boundaries, with measured refresh latency used to start the upcoming minute’s image early so it settles near the boundary. HTTPS verifies certificates and hostnames using the ESP32's built-in CA bundle. Wi-Fi credentials are stored in NVS on the board, which is **not encrypted at rest** in this development build.
+
+From midnight to 07:00 London time, a generated sleeping-squirrel illustration replaces the dashboard. The screen is drawn once, then display and weather/TfL updates pause until morning. NTP stays active so the clock resumes accurately. This is application quiet mode; the ESP32 remains powered. [Night mode and preview →](docs/NIGHT_MODE.md)
 
 [Refresh commands, timing evidence and limitations →](docs/REFRESH.md)
 
@@ -115,17 +127,20 @@ Fonts and icons are already generated, so a firmware build does not require asse
 
 ```bash
 .tools/venv/bin/python tools/generate_assets.py
+.tools/venv/bin/python tools/generate_sleep_asset.py
 ./tools/preview.sh
 ```
 
 ## Validation and scope
 
-Compiled with Espressif Arduino **3.3.12** and ArduinoJson **7.4.2**. The renderer's buffer guards passed. On the physical panel, one normal full refresh and two consecutive clock-window refreshes completed, and the user confirmed the weather, date and forecasts stayed still. See [the captured timings](docs/validation.json).
+Compiled with Espressif Arduino **3.3.12** and ArduinoJson **7.4.2**. Public and deployment builds, renderer buffer guards, all 1,440 changed-digit minute transitions, cache/transport fixtures, NTP-correction regressions and night/DST boundary tests passed.
+
+On the device, consecutive clock updates advanced without rollback; the last measured completion was 10 ms after the NTP minute boundary. A 90-second quiet-mode preview held the illustrated screen without intermediate display/data updates, then restarted fetching and restored the dashboard. See [stable-clock validation](docs/stable-clock-validation.json), [night-mode validation](docs/night-mode-validation.json), and [ten-minute data validation](docs/ten-minute-data-validation.json). These are short captures; an actual overnight run and the second ten-minute fetch batch were not captured.
 
 Waveshare does not advertise partial refresh for this panel, although its controller manual documents the window used here. This is a tested prototype, not a vendor-qualified operating mode. The minute cadence is outside Waveshare's general 180-second refresh guidance. Long-term ghosting and panel lifetime have not been established; the ten-minute full-repeat schedule is configured but was not captured in the short validation run.
 
 ## Credits and licensing
 
-The visual direction, fonts and icons come from [czuryk/Waveshare-ePaper-10.85-dashboard](https://github.com/czuryk/Waveshare-ePaper-10.85-dashboard). The display driver comes from [Waveshare's exact-model example](https://github.com/waveshareteam/e-Paper/tree/master/E-paper_Separate_Program/10.85inch_e-Paper_G). This project ports rendering and live services to native ESP32 code and adds the verified dual-controller clock window.
+The first renderer and the existing weather icons came from [czuryk/Waveshare-ePaper-10.85-dashboard](https://github.com/czuryk/Waveshare-ePaper-10.85-dashboard). The current compact layout follows a selected AI-generated concept and uses [Oxanium](https://github.com/google/fonts/tree/main/ofl/oxanium), with its SIL Open Font License included in `assets/Oxanium-OFL.txt`. The display driver comes from [Waveshare's exact-model example](https://github.com/waveshareteam/e-Paper/tree/master/E-paper_Separate_Program/10.85inch_e-Paper_G). This project renders live services in native ESP32 code and adds the verified dual-controller clock window.
 
 Original integration code is MIT licensed. Third-party fonts, icons, generated asset bitmaps and upstream-derived UI elements are **not relicensed by this repository**. See [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md) for component provenance and the upstream licensing limits.

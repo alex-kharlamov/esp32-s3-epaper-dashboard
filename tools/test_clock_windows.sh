@@ -16,5 +16,5 @@ if [[ "$(uname -s)" == Darwin ]]; then
   fi
   FLAGS+=(-isysroot "$SDK" "-Wl,-syslibroot,$SDK")
 fi
-"$CXX" "${FLAGS[@]}" -O2 -I "$SCENE" "$REPO_ROOT/tools/clock_windows_test.cpp" "$SCENE/Dashboard.cpp" "$SCENE/DashboardAssets.cpp" "$SCENE/SampleData.cpp" -o "$OUT/clock-windows-test"
+"$CXX" "${FLAGS[@]}" -O2 -I "$SCENE" "$REPO_ROOT/tools/clock_windows_test.cpp" "$SCENE/Dashboard.cpp" "$SCENE/DashboardAssets.cpp" "$SCENE/SleepArtwork.cpp" "$SCENE/SampleData.cpp" -o "$OUT/clock-windows-test"
 "$OUT/clock-windows-test"

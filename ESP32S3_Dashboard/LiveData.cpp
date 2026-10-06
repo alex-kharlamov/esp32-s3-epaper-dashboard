@@ -1,5 +1,10 @@
 #include "LiveData.h"
 #include "Configuration.h"
+#include "WeatherCache.h"
+#include "WeatherParsing.h"
+#include "TransportData.h"
+#include "DashboardState.h"
+#include "QuietHours.h"
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <WiFi.h>
@@ -10,38 +15,38 @@
 #include <time.h>
 #include <esp_sntp.h>
 #include <math.h>
+#include <atomic>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
+#include <freertos/task.h>
 
 namespace {
 constexpr double LAT=DASH_LATITUDE,LON=DASH_LONGITUDE;
 constexpr const char *LOCAL_TIMEZONE=DASH_TIMEZONE;
-DashboardData live{};
-char clockText[6],dateText[40],weekdayText[8],hours[8][6],status[110];
-time_t fetchedAt=0;
-bool haveWeather=false;
+WeatherSnapshot weather{};
+TransportSnapshot transport{};
+SemaphoreHandle_t stateMutex=nullptr;
+DashboardText dashboardText{};
+bool haveWeather=false,restoredWeather=false,repaintTransport=false;
+std::atomic<uint32_t> sleepPreviewUntil{0};
+void networkWorker(void*);
 String setupLine;
 uint32_t lastWifiTry=0;
-const char *weatherIcon(int code,bool day=true) {
-  if(code==0)return day?"icon_sun":"icon_night";
-  if(code<=2)return day?"icon_partly-cloudy-day":"icon_clouds";
-  if(code<=48)return "icon_clouds";
-  if(code>=95)return "icon_storm";
-  if((code>=71&&code<=77)||code==85||code==86)return "icon_snow";
-  if(code==65||code==67||code==82)return "icon_heavy_rain";
-  return "icon_rain";
-}
 bool getJson(const String &url,JsonDocument &doc) {
+  if(liveDataQuiet())return false;
   NetworkClientSecure tls;tls.useBuiltinCACertBundle();tls.setHandshakeTimeout(12);
   HTTPClient http;http.setConnectTimeout(10000);http.setTimeout(12000);
+  http.setUserAgent("ESP32-ePaper-Dashboard/1.1");
   if(!http.begin(tls,url))return false;
   int code=http.GET();
-  if(code!=200){Serial.printf("Weather HTTP failure: %d\n",code);http.end();return false;}
+  if(code!=200){Serial.printf("Data HTTP failure: %d\n",code);http.end();return false;}
+  if(http.getSize()>60000){http.end();return false;}
   String body=http.getString();http.end();
   if(body.length()>60000)return false;
   auto error=deserializeJson(doc,body);
-  if(error){Serial.println("Weather JSON parse failed");return false;}
+  if(error){Serial.println("Data JSON parse failed");return false;}
   return true;
 }
-bool number(JsonVariantConst v) {return v.is<float>()&&isfinite(v.as<float>());}
 void connectSaved(bool scan=false) {
   WiFi.mode(WIFI_STA);WiFi.setAutoReconnect(false);WiFi.setSleep(false);
   WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
@@ -68,7 +73,17 @@ void connectSaved(bool scan=false) {
   Serial.println("Connecting using existing ESP32 Wi-Fi configuration; credentials are not logged.");
 }
 }
-void beginLiveData() {
+bool beginLiveData() {
+  stateMutex=xSemaphoreCreateMutex();if(!stateMutex)return false;
+  Preferences cache;
+  if(cache.begin("dashboardwx",true)) {
+    WeatherRecord record{};
+    if(cache.getBytesLength("snapshot")==sizeof(record) && cache.getBytes("snapshot",&record,sizeof(record))==sizeof(record) && loadWeatherRecord(&record,sizeof(record),LAT,LON,weather)) {
+      haveWeather=restoredWeather=true;
+      Serial.printf("WEATHER_CACHE_RESTORED: fetched_epoch=%lld hours=%u\n",(long long)weather.fetchedAt,weather.hourCount);
+    }else Serial.println("WEATHER_CACHE: no valid cache for this location.");
+    cache.end();
+  }
   setenv("TZ",LOCAL_TIMEZONE,1);tzset();
   configTzTime(LOCAL_TIMEZONE,"pool.ntp.org","time.cloudflare.com","time.google.com");
   esp_sntp_set_sync_interval(15*60*1000);
@@ -82,9 +97,10 @@ void beginLiveData() {
   connectSaved(true);
   Serial.printf("LIVE: %s / timezone=%s; clock=%lu ms, full/weather=%lu ms.\n",DASH_LOCATION_LABEL,DASH_TIMEZONE,(unsigned long)DASH_CLOCK_INTERVAL_MS,(unsigned long)DASH_FULL_INTERVAL_MS);
   Serial.println("If Wi-Fi is not configured, run tools/wifi_setup.py locally over USB.");
+  return xTaskCreate(networkWorker,"dashboard-data",16384,nullptr,1,nullptr)==pdPASS;
 }
 void serviceLiveSetup() {
-  if(WiFi.status()!=WL_CONNECTED && millis()-lastWifiTry>=30000)connectSaved();
+  if(!liveDataQuiet() && WiFi.status()!=WL_CONNECTED && millis()-lastWifiTry>=30000)connectSaved();
   static bool reported=false;
   if(!reported && millis()>15000) {
     reported=true;
@@ -106,60 +122,104 @@ void serviceLiveSetup() {
         }else Serial.println("WIFI configuration has invalid lengths.");
         pass.clear();
       }else Serial.println("WIFI configuration invalid.");
-    }else if(setupLine=="STATUS")Serial.printf("LIVE status: WiFi=%s time=%s weather=%s\n",WiFi.status()==WL_CONNECTED?"connected":"disconnected",time(nullptr)>1700000000?"synced":"waiting",haveWeather?"available":"waiting");
+    }else if(setupLine=="SLEEP PREVIEW") {
+      sleepPreviewUntil.store(millis()+90000);
+      Serial.println("SLEEP_PREVIEW: 90 seconds; NTP unchanged, data/display quiet gate enabled.");
+    }else if(setupLine=="REPAINT TRANSPORT") {
+      repaintTransport=true;Serial.println("TRANSPORT_REPAINT_REQUESTED: same live values, normal colour waveform.");
+    }else if(setupLine=="STATUS") {
+      xSemaphoreTake(stateMutex,portMAX_DELAY);bool cached=haveWeather;xSemaphoreGive(stateMutex);
+      Serial.printf("LIVE status: WiFi=%s time=%s weather=%s\n",WiFi.status()==WL_CONNECTED?"connected":"disconnected",time(nullptr)>1700000000?"available":"waiting",cached?"available":"waiting");
+    }
     setupLine.clear();
   }
 }
 bool fetchLiveData() {
   time_t now=time(nullptr);
-  if(WiFi.status()!=WL_CONNECTED){Serial.println("Live data waiting for saved Wi-Fi connection.");return false;}
-  if(now<1700000000){Serial.println("Live data waiting for NTP time (required for TLS).");return false;}
+  if(WiFi.status()!=WL_CONNECTED || now<MIN_VALID_EPOCH || liveDataQuiet())return false;
   String location="latitude="+String(LAT,6)+"&longitude="+String(LON,6);
   String url="https://api.open-meteo.com/v1/forecast?"+location+
-    "&current=temperature_2m,relative_humidity_2m,pressure_msl,wind_speed_10m,wind_direction_10m,weather_code,is_day"
-    "&hourly=temperature_2m,precipitation_probability,weather_code,uv_index,is_day&forecast_days=2&timeformat=unixtime&timezone=UTC";
-  JsonDocument doc;if(!getJson(url,doc))return false;
-  JsonObjectConst current=doc["current"].as<JsonObjectConst>();
-  for(const char *key:{"temperature_2m","relative_humidity_2m","pressure_msl","wind_speed_10m","wind_direction_10m","weather_code","is_day"})
-    if(!number(current[key])){Serial.println("Live weather missing current values; retaining previous data.");return false;}
-  JsonObjectConst hourly=doc["hourly"].as<JsonObjectConst>();
-  JsonArrayConst times=hourly["time"].as<JsonArrayConst>();
-  int first=-1,currentHour=-1;
-  for(unsigned i=0;i<times.size();i++) {
-    if(!times[i].is<long long>())return false;
-    time_t t=times[i].as<long long>();if(t<=now)currentHour=i;else if(first<0)first=i;
+    "&current=temperature_2m,wind_speed_10m,wind_direction_10m,weather_code,is_day"
+    "&hourly=temperature_2m,precipitation_probability,weather_code,is_day&forecast_days=2&timeformat=unixtime&timezone=UTC";
+  JsonDocument doc;WeatherSnapshot next{};
+  if(!getJson(url,doc) || !parseWeatherResponse(doc.as<JsonVariantConst>(),time(nullptr),LAT,LON,next)) {
+    Serial.println("WEATHER_FETCH_FAILED: keeping last good snapshot.");return false;
   }
-  if(first<0||first+8>int(times.size())||currentHour<0)return false;
-  for(const char *key:{"temperature_2m","precipitation_probability","weather_code","is_day","uv_index"})
-    if(hourly[key].size()!=times.size())return false;
-  for(int i=first;i<first+8;i++)for(const char *key:{"temperature_2m","precipitation_probability","weather_code","is_day"})
-    if(!number(hourly[key][i]))return false;
-  DashboardData next{};
-  next.temperature=lround(current["temperature_2m"].as<float>());
-  next.humidity=lround(current["relative_humidity_2m"].as<float>());
-  next.pressure=lround(current["pressure_msl"].as<float>());
-  next.windSpeed=current["wind_speed_10m"].as<float>();next.windDirection=lround(current["wind_direction_10m"].as<float>());
-  next.weatherIcon=weatherIcon(current["weather_code"].as<int>(),current["is_day"].as<int>()!=0);
-  next.uv=number(hourly["uv_index"][currentHour])?lround(hourly["uv_index"][currentHour].as<float>()):-1;
-  for(int i=0;i<8;i++) {
-    int j=first+i;time_t t=times[j].as<long long>();tm local{};localtime_r(&t,&local);
-    strftime(hours[i],sizeof(hours[i]),"%H:%M",&local);
-    next.forecast[i]={hours[i],int(lround(hourly["temperature_2m"][j].as<float>())),weatherIcon(hourly["weather_code"][j].as<int>(),hourly["is_day"][j].as<int>()!=0),int(lround(hourly["precipitation_probability"][j].as<float>()))};
+  if(liveDataQuiet())return false; // Discard a request crossing midnight.
+  xSemaphoreTake(stateMutex,portMAX_DELAY);
+  memcpy(&weather,&next,sizeof(next));haveWeather=true;restoredWeather=false;
+  xSemaphoreGive(stateMutex);
+  Preferences cache;bool saved=false;
+  if(cache.begin("dashboardwx",false)) {
+    WeatherRecord record=makeWeatherRecord(next);
+    saved=cache.putBytes("snapshot",&record,sizeof(record))==sizeof(record);cache.end();
   }
-  next.aqi=-1;
-  JsonDocument air;
-  if(getJson("https://air-quality-api.open-meteo.com/v1/air-quality?"+location+"&current=us_aqi",air)&&number(air["current"]["us_aqi"]))next.aqi=lround(air["current"]["us_aqi"].as<float>());
-  live=next;haveWeather=true;fetchedAt=time(nullptr);
-  Serial.printf("LIVE fetch OK: temperature=%d humidity=%d AQI=%d; eight hourly forecasts.\n",live.temperature,live.humidity,live.aqi);
+  Serial.printf("WEATHER_FETCH_OK: temperature=%d wind=%.1f hours=%u; CACHE_%s\n",next.temperature,next.windSpeed,next.hourCount,saved?"SAVED":"SAVE_FAILED");
   return true;
 }
+namespace {
+void updateTransportCheck(TransportCheck &c,ServiceHealth health,time_t checkedAt) {
+  c.latestRequestOk=health!=ServiceHealth::Unknown;
+  if(c.latestRequestOk){c.health=health;c.checkedAt=checkedAt;}
+}
+void fetchTransportData() {
+  if(liveDataQuiet())return;
+  TransportSnapshot next{};
+  xSemaphoreTake(stateMutex,portMAX_DELAY);next=transport;xSemaphoreGive(stateMutex);
+  JsonDocument lines,stations;
+  bool linesOk=getJson("https://api.tfl.gov.uk/Line/dlr,jubilee/Status?detail=true",lines);
+  time_t now=time(nullptr);
+  updateTransportCheck(next.dlr,linesOk?parseLineStatus(lines.as<JsonVariantConst>(),"dlr",now):ServiceHealth::Unknown,now);
+  updateTransportCheck(next.jubilee,linesOk?parseLineStatus(lines.as<JsonVariantConst>(),"jubilee",now):ServiceHealth::Unknown,now);
+  bool stationsOk=getJson("https://api.tfl.gov.uk/StopPoint/940GZZDLCGT,940GZZLUCGT,940GZZDLEIN/Disruption?includeRouteBlockedStops=false",stations);
+  now=time(nullptr);
+  updateTransportCheck(next.canningDlr,stationsOk?parseStationStatus(stations.as<JsonVariantConst>(),"940GZZDLCGT",now):ServiceHealth::Unknown,now);
+  updateTransportCheck(next.canningTube,stationsOk?parseStationStatus(stations.as<JsonVariantConst>(),"940GZZLUCGT",now):ServiceHealth::Unknown,now);
+  updateTransportCheck(next.eastIndia,stationsOk?parseStationStatus(stations.as<JsonVariantConst>(),"940GZZDLEIN",now):ServiceHealth::Unknown,now);
+  if(liveDataQuiet())return; // Do not publish overnight state.
+  xSemaphoreTake(stateMutex,portMAX_DELAY);transport=next;xSemaphoreGive(stateMutex);
+  Serial.printf("TFL_FETCH: lines=%s stations=%s DLR=%u Jubilee=%u CanningTown=%u EastIndia=%u\n",linesOk?"OK":"FAILED",stationsOk?"OK":"FAILED",unsigned(next.dlr.health),unsigned(next.jubilee.health),unsigned(combineStationHealth(next.canningDlr.health,next.canningTube.health)),unsigned(next.eastIndia.health));
+}
+void networkWorker(void*) {
+  bool batchAttempted=false,lastWeatherOk=false,wasQuiet=false;
+  uint32_t lastBatchStarted=0,lastWeatherAttempt=0;
+  for(;;) {
+    if(liveDataQuiet()) {
+      if(!wasQuiet)Serial.println("NIGHT_DATA_PAUSE: weather/TfL polling suspended.");
+      wasQuiet=true;batchAttempted=false;
+      vTaskDelay(pdMS_TO_TICKS(250));continue;
+    }
+    if(wasQuiet){wasQuiet=false;Serial.println("NIGHT_DATA_RESUME: immediate morning batch.");}
+    if(WiFi.status()==WL_CONNECTED && time(nullptr)>=MIN_VALID_EPOCH) {
+      uint32_t now=millis();
+      if(!batchAttempted || now-lastBatchStarted>=DASH_FULL_INTERVAL_MS) {
+        batchAttempted=true;lastBatchStarted=now;
+        Serial.println("DATA_BATCH: weather + TfL; interval=10 minutes");
+        lastWeatherOk=fetchLiveData();lastWeatherAttempt=millis();
+        fetchTransportData();
+      }else if(!lastWeatherOk && now-lastWeatherAttempt>=30000) {
+        // Weather recovery can retry sooner without increasing TfL polling.
+        lastWeatherOk=fetchLiveData();lastWeatherAttempt=millis();
+      }
+    }
+    vTaskDelay(pdMS_TO_TICKS(250));
+  }
+}
+}
 bool getLiveDashboard(DashboardData &data,time_t displayAt) {
-  time_t now=time(nullptr);if(!haveWeather||now<1700000000)return false;
-  time_t clockAt=displayAt?displayAt:now;
-  tm local{};localtime_r(&clockAt,&local);
-  strftime(clockText,sizeof(clockText),"%H:%M",&local);strftime(dateText,sizeof(dateText),"%d %B %Y",&local);
-  const char *days[]={"SUN","MON","TUE","WED","THU","FRI","SAT"};snprintf(weekdayText,sizeof(weekdayText),"%s",days[local.tm_wday]);
-  tm updated{};localtime_r(&fetchedAt,&updated);char stamp[6];strftime(stamp,sizeof(stamp),"%H:%M",&updated);
-  snprintf(status,sizeof(status),"%s  /  %s  /  OPEN-METEO  /  WEATHER %s  /  °C / RAIN CHANCE",now-fetchedAt>600?"STALE":"LIVE",DASH_LOCATION_LABEL,stamp);
-  data=live;data.clock=clockText;data.date=dateText;data.weekday=weekdayText;data.statusText=status;data.sampleData=false;return true;
+  // Only copy state under the mutex: no network/flash I/O on the render path.
+  WeatherSnapshot w{};TransportSnapshot t{};bool available,restored;
+  xSemaphoreTake(stateMutex,portMAX_DELAY);
+  memcpy(&w,&weather,sizeof(w));t=transport;available=haveWeather;restored=restoredWeather;
+  xSemaphoreGive(stateMutex);
+  composeDashboard(data,dashboardText,available?&w:nullptr,restored,t,time(nullptr),displayAt,WiFi.status()==WL_CONNECTED,DASH_TRANSPORT_STALE_SECONDS,DASH_LOCATION_LABEL);
+  return true;
+}
+
+bool transportRepaintPending(){return repaintTransport;}
+void clearTransportRepaint(){repaintTransport=false;}
+
+bool liveDataQuiet() {
+  const uint32_t until=sleepPreviewUntil.load();
+  return quietHours(time(nullptr)) || (until && int32_t(until-millis())>0);
 }

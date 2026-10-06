@@ -15,8 +15,16 @@ at commit `ceced5eb8a0c17c58d73064a687f924bc3e3b461`.
 The C++ renderer is inspired by and adapts the upstream dashboard's rendering
 primitives and visual design. The fonts `Aldrich-Regular.ttc`,
 `advanced_led_board-7.ttc`, and the icon BMP files were copied from that source.
-`asset-manifest.json` records their hashes. Generated bitmaps in
-`DashboardAssets.cpp` derive from those assets.
+`asset-manifest.json` records their hashes. The older font files remain as
+historical source assets; the active renderer now uses Oxanium instead.
+Current icon bitmaps in `DashboardAssets.cpp` still derive from upstream icons.
+
+The selected field-journal layout was developed from an AI-generated design
+concept. `Oxanium-Variable.ttf` was obtained from the Google Fonts Oxanium
+directory (https://github.com/google/fonts/tree/main/ofl/oxanium). The font is
+Copyright 2019 The Oxanium Project Authors, distributed under the SIL Open Font
+License 1.1, included at `assets/Oxanium-OFL.txt`. Generated glyph subsets in
+`DashboardAssets.cpp` derive from that font and retain its licensing terms.
 
 That snapshot did not include a top-level license. This repository does not
 claim to grant redistribution or relicensing rights for upstream-derived UI
@@ -35,9 +43,8 @@ https://github.com/waveshareteam/e-Paper/tree/master/E-paper_Separate_Program/10
 
 ## Services and other dependencies
 
-Open-Meteo weather and air-quality APIs provide modelled data. The README/footer
-attribute Open-Meteo. Air-quality API data also derives from CAMS; consult
-https://open-meteo.com/en/docs/air-quality-api for data attribution and usage terms.
+Open-Meteo provides weather data; the README/footer attribute Open-Meteo.
+The current layout does not request or display air-quality data.
 Arduino-ESP32, ArduinoJson, pyserial, esptool and Pillow retain their respective
 licenses and are installed separately, not vendored here.
 
@@ -46,3 +53,9 @@ licenses and are installed separately, not vendored here.
 The dashboard preview is a rendering of sample fixtures using the upstream-derived
 assets above. The hardware photograph was supplied by the project owner and shows
 its initial four-colour bring-up test. It is not a photograph of the final UI.
+
+The sleeping-squirrel illustration in `assets/sleep-squirrel-source.png` was
+generated for this project with the built-in image-generation tool on 2026-10-06.
+Its prompt is preserved in `assets/sleep-artwork-prompt.txt`; `SleepArtwork.cpp`
+is the corresponding native-palette bitmap compiled by `tools/generate_sleep_asset.py`.
+It does not use the upstream dashboard's weather-icon assets.

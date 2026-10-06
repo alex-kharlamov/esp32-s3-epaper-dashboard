@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-06",
+  "firmware": "LIVE v17 NIGHT QUIET MODE, built 14:35:45",
+  "quiet_hours": "00:00 inclusive to 07:00 exclusive, London civil time",
+  "ntp_stays_active": true,
+  "mode": "Application quiet mode; not MCU deep sleep",
+  "artwork": "Built-in image-generated sleeping squirrel with acorn, moon and stars",
+  "artwork_palette": [
+    "black",
+    "white",
+    "yellow",
+    "red"
+  ],
+  "artwork_flash_bytes": 73920,
+  "artwork_source_sha256": "73e2f0c16acb446e8005f56971982cc13bc739d88b0c27e2bae7ba7090064d21",
+  "public_and_private_builds_passed": true,
+  "upload_hash_verified": true,
+  "host_tests": [
+    "midnight/07:00 second boundaries",
+    "winter/summer and both DST transition days",
+    "invalid time does not invent night",
+    "one-shot quiet state transitions",
+    "full-day predictive clock regression",
+    "all clock minute windows",
+    "weather/TfL cache and rendering tests",
+    "sleep renderer buffer guards"
+  ],
+  "device_preview_seconds": 90,
+  "sleep_screen_refreshes": 1,
+  "intermediate_screen_or_data_updates": 0,
+  "automatic_wake_observed": true,
+  "weather_and_tfl_fetches_succeeded_after_wake": true,
+  "dashboard_full_redraw_after_wake": true,
+  "scope": "90-second diagnostic of final illustrated firmware, without changing system time. Actual midnight/07:00 and DST boundaries tested on host; an overnight device run was not observed. Earlier gate capture additionally confirms clock-only partial resume."
+}

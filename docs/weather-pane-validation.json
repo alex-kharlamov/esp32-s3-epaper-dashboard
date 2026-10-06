@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-06",
+  "firmware": "LIVE v14 LARGE WEATHER + TFL",
+  "builds_passed": [
+    "public",
+    "private deployment"
+  ],
+  "upload_verified": true,
+  "temperature_font": {
+    "before": 80,
+    "after": 120
+  },
+  "condition_font": {
+    "before": 20,
+    "after": 35,
+    "multiword_layout": "two lines"
+  },
+  "wind": "below current-weather icon",
+  "refresh_geometry_unchanged": true,
+  "daily_clock_transitions_passed": 1440,
+  "renderer_clipping_guards_passed": true,
+  "device_full_redraw_and_single_digit_refresh_passed": true,
+  "clock_waveform_ms": 5270,
+  "cycles": [
+    {
+      "target_epoch_ms": 1791291960000,
+      "finish_epoch_ms": 1791292000914,
+      "offset_ms": 40914,
+      "cycle_ms": 20637
+    },
+    {
+      "target_epoch_ms": 1791292020000,
+      "finish_epoch_ms": 1791292020209,
+      "offset_ms": 209,
+      "cycle_ms": 8965
+    }
+  ],
+  "physical_visual_confirmation": "Not requested for this weather-only refinement; native renderer preview inspected."
+}

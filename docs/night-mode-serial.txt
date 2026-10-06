@@ -1,0 +1,74 @@
+ESP32-S3 Dashboard LIVE v17 NIGHT QUIET MODE; built Oct  6 2026 14:35:45
+UI: compact two-journey colour dashboard / changed-digit clock
+Live weather and time; no fictional fallback will be displayed.
+WEATHER_CACHE_RESTORED: fetched_epoch=1791293821 hours=48
+Connecting using existing ESP32 Wi-Fi configuration; credentials are not logged.
+LIVE: London / timezone=GMT0BST,M3.5.0/1,M10.5.0; clock=60000 ms, full/weather=600000 ms.
+If Wi-Fi is not configured, run tools/wifi_setup.py locally over USB.
+DATA_BATCH: weather + TfL; interval=10 minutes
+WEATHER_FETCH_OK: temperature=19 wind=1.8 hours=48; CACHE_SAVED
+TFL_FETCH: lines=OK stations=OK DLR=1 Jubilee=1 CanningTown=2 EastIndia=1
+NTP_SYNC: epoch=1791293939.137208
+CLOCK_SCHEDULE: target_epoch_ms=1791294120000 start_epoch_ms=1791294099474 lead_ms=21000
+Native UI rendered: 1360x480, 163200 bytes, 242 ms
+WINDOW_CYCLE_START: uptime=180253 ms clock=14:42 mode=FULL
+BUSY wait: reset, level=1 (LOW=busy)
+BUSY released: reset after 10 ms
+BUSY wait: power on, level=1 (LOW=busy)
+BUSY released: power on after 10 ms
+DISPLAY_PHASE: NORMAL_COLOUR, 0 window(s)
+Write CS_M / left controller
+Write CS_S / right controller
+Refresh start
+BUSY wait: refresh, level=0 (LOW=busy)
+BUSY released: refresh after 16961 ms
+Refresh complete after 16961 ms (image needs visual confirmation)
+Entering display sleep
+BUSY wait: sleep power off, level=1 (LOW=busy)
+BUSY released: sleep power off after 10 ms
+CLOCK_COMPLETE: target_epoch_ms=1791294120000 finish_epoch_ms=1791294120119 offset_ms=119 cycle_ms=20645
+LIVE_REFRESH_DONE: refresh completed; panel asleep, PWR LOW.
+SLEEP_PREVIEW: 90 seconds; NTP unchanged, data/display quiet gate enabled.
+NIGHT_DATA_PAUSE: weather/TfL polling suspended.
+NIGHT_SLEEP: one full sleep image; no further screen or data updates while quiet mode is active.
+BUSY wait: reset, level=1 (LOW=busy)
+BUSY released: reset after 10 ms
+BUSY wait: power on, level=1 (LOW=busy)
+BUSY released: power on after 10 ms
+DISPLAY_PHASE: NORMAL_COLOUR, 0 window(s)
+Write CS_M / left controller
+Write CS_S / right controller
+Refresh start
+BUSY wait: refresh, level=0 (LOW=busy)
+BUSY released: refresh after 16951 ms
+Refresh complete after 16951 ms (image needs visual confirmation)
+Entering display sleep
+BUSY wait: sleep power off, level=1 (LOW=busy)
+BUSY released: sleep power off after 10 ms
+NIGHT_SCREEN_DONE: panel asleep, PWR LOW.
+NIGHT_DATA_RESUME: immediate morning batch.
+DATA_BATCH: weather + TfL; interval=10 minutes
+NIGHT_WAKE: restore dashboard with a full redraw; fresh data batch resumes.
+CLOCK_SCHEDULE: target_epoch_ms=1791294180000 start_epoch_ms=1791294210482 lead_ms=20645
+Native UI rendered: 1360x480, 163200 bytes, 282 ms
+WINDOW_CYCLE_START: uptime=291301 ms clock=14:43 mode=FULL
+BUSY wait: reset, level=1 (LOW=busy)
+BUSY released: reset after 10 ms
+WEATHER_FETCH_OK: temperature=19 wind=1.8 hours=48; CACHE_SAVED
+BUSY wait: power on, level=1 (LOW=busy)
+BUSY released: power on after 10 ms
+DISPLAY_PHASE: NORMAL_COLOUR, 0 window(s)
+Write CS_M / left controller
+Write CS_S / right controller
+TFL_FETCH: lines=OK stations=OK DLR=1 Jubilee=1 CanningTown=2 EastIndia=1
+Refresh start
+BUSY wait: refresh, level=0 (LOW=busy)
+BUSY released: refresh after 16960 ms
+Refresh complete after 16960 ms (image needs visual confirmation)
+Entering display sleep
+BUSY wait: sleep power off, level=1 (LOW=busy)
+BUSY released: sleep power off after 10 ms
+CLOCK_COMPLETE: target_epoch_ms=1791294180000 finish_epoch_ms=1791294231599 offset_ms=51599 cycle_ms=21117
+LIVE_REFRESH_DONE: refresh completed; panel asleep, PWR LOW.
+DISPLAY_DIRTY: 14:43 -> 14:44, 1 window(s)
+CLOCK_SCHEDULE: target_epoch_ms=1791294240000 start_epoch_ms=1791294231601 lead_ms=8770

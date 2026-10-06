@@ -16,7 +16,7 @@ if [[ "$(uname -s)" == Darwin ]]; then
   fi
   FLAGS+=(-isysroot "$SDK" "-Wl,-syslibroot,$SDK")
 fi
-"$CXX" "${FLAGS[@]}" -I "$SCENE" "$REPO_ROOT/tools/preview.cpp" "$SCENE/Dashboard.cpp" "$SCENE/DashboardAssets.cpp" "$SCENE/SampleData.cpp" -o "$OUT/renderer"
+"$CXX" "${FLAGS[@]}" -I "$SCENE" "$REPO_ROOT/tools/preview.cpp" "$SCENE/Dashboard.cpp" "$SCENE/DashboardAssets.cpp" "$SCENE/SleepArtwork.cpp" "$SCENE/SampleData.cpp" -o "$OUT/renderer"
 "$OUT/renderer" "$OUT/frame.bin"
 "$PYTHON" - "$OUT/frame.bin" "$OUT/dashboard.png" <<'PY'
 import sys

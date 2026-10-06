@@ -1,0 +1,3 @@
+Built-in image generation, 2026-10-06.
+Prompt: Adorable sleeping red squirrel curled up hugging an acorn, huge fluffy squirrel tail, tufted ears, closed eyes, tiny smile and rosy cheeks. Children's-book ink illustration with clearly drawn anatomy and sparse strong fur lines. Flat black, white, sunflower yellow and vermilion only. Yellow crescent moon and three small stars above right; wide composition, squirrel on the left and pure white space on the right. No text, watermark or frame.
+The original generated PNG is preserved. tools/generate_sleep_asset.py resizes and packs its pixels into the native four-pigment, 2-bit firmware format.

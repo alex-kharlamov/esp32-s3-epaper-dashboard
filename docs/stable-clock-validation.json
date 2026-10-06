@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-06",
+  "firmware": "LIVE v16 STABLE NTP CLOCK",
+  "bug": "After an early predictive frame, zero next dirty-window lead incorrectly triggered rollback to the previous minute.",
+  "fix": "Hold an already displayed upcoming minute regardless of changing lead estimates; converge once for larger wall-time corrections.",
+  "builds_passed": [
+    "public",
+    "private deployment"
+  ],
+  "upload_hash_verified": true,
+  "tests": [
+    "early-frame regression with six lead estimates at every 20 ms before boundary",
+    "full-day simulation with changing latency and early completions",
+    "forward/backward NTP corrections",
+    "all 1440 changed-digit minute transitions"
+  ],
+  "device_ntp_sync_observed": true,
+  "device_clock_sequence": [
+    "14:23",
+    "14:24",
+    "14:25"
+  ],
+  "cycles": [
+    {
+      "target_epoch_ms": 1791292980000,
+      "finish_epoch_ms": 1791293020034,
+      "offset_ms": 40034,
+      "cycle_ms": 20626
+    },
+    {
+      "target_epoch_ms": 1791293040000,
+      "finish_epoch_ms": 1791293040196,
+      "offset_ms": 196,
+      "cycle_ms": 8965
+    },
+    {
+      "target_epoch_ms": 1791293100000,
+      "finish_epoch_ms": 1791293100010,
+      "offset_ms": 10,
+      "cycle_ms": 8966
+    }
+  ],
+  "scope": "Three refresh completions observed. Repeated 15-minute NTP resynchronization was not captured; corrections are covered by host tests."
+}

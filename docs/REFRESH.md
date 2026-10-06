@@ -24,7 +24,7 @@ The controller manual's printed page 40 documents `R83h` (PTL). Its nine paramet
 3. Compare the clock with the last successfully displayed `HH:MM`. Generate a rectangle for each changed digit, merging adjacent changed digits. Send `0x83` with `PMODE=1`, `PTH_EN=0` so source outputs follow horizontal bounds.
 4. Trigger the refresh with `0x12:0x00`, wait for BUSY to assert and release, then sleep and set PWR LOW.
 
-The allowed clock region is **x=472…1339, y=40…323**. Actual windows are computed from the LED font advances and the same fitting calculation as the renderer. Horizontal boundaries are rounded outward to four pixels as required by the controller.
+The allowed clock region is **x=472…1339, y=8…243**. Actual windows are computed from the fixed-cell Oxanium font advances and the same fitting calculation as the renderer. Horizontal boundaries are rounded outward to four pixels as required by the controller.
 
 Each window is split at x=680 into local controller coordinates. Refresh commands still go to both controllers because BUSY is shared. If one controller has no changed digit, it receives a minimal **four-pixel white padding window** at y=40 above the clock glyphs, rather than a window containing an unchanged digit. Firmware checks that this padding is white before driving it.
 
@@ -65,10 +65,20 @@ Sources: [exact panel manual, printed page 40](https://files.waveshare.com/wiki/
 
 Run `./tools/test_clock_windows.sh`. It renders every one of the 1,440 daily minute transitions and checks that each changed pixel falls inside an aligned window, including midnight. It also checks unchanged time, forward/backward corrections, single-digit changes, minute carry and separate hour/minute groups, with the colon excluded. These software checks do not replace physical confirmation of preservation and ghosting.
 
-On the device, `12:02 → 12:03` produced one group: controller S received x=456…651 (global x=1136…1331), y=40…323, while controller M received only its four white padding pixels. The waveform completed in 5.270 seconds. See [the capture summary](digit-window-validation.json). Visual confirmation and a physical two-pass rollover capture are separate from the software tests.
+In the earlier layout capture, `12:02 → 12:03` produced one group: controller S received x=456…651 (global x=1136…1331), y=40…323, while controller M received only its four white padding pixels. The waveform completed in 5.270 seconds. See [the capture summary](digit-window-validation.json). Visual confirmation and a physical two-pass rollover capture are separate from the software tests.
 
 ## NTP alignment capture
 
 An actual `NTP_SYNC` callback was observed after upload. The next two minute transitions, `12:13 → 12:14` and `12:14 → 12:15`, completed **47 ms** and **14 ms** after their respective NTP wall-clock boundaries. Complete clock cycles measured **8.958 s** and **8.959 s**, including the 5.27-second waveform plus rendering, initialization, transfer and sleep. The scheduler started those cycles with 8.928 s and 8.958 s of lead time. See [the measurement record](time-sync-validation.json).
 
 These are cycle-end timestamps on the device, not external optical measurements or a guarantee of NTP server accuracy. The 15-minute resync interval is configured; the short capture observed the initial sync only.
+
+## Compact colour layout
+
+The current clock window is y=8…243, and the transport strip is y=252…295. Inactive controllers receive four known-white padding pixels at y=0. Changed journey indicators use the normal colour waveform in a separate phase, before fast clock windows. Normal clock minutes never refresh the strip. See [layout and diagnostic details](COMPACT_COLOUR.md).
+
+### Stable predictive clock scheduling (v16)
+
+After an upcoming-minute frame settles early, its next dirty-window estimate can be zero. Previously that changing estimate was also used to decide whether the displayed time was too far ahead, allowing the scheduler to redraw the previous minute and then advance again. The scheduler now holds an already displayed upcoming minute until wall time reaches it, independently of the next waveform estimate. Larger NTP corrections still converge to wall time, while small backward corrections do not bounce the digits.
+
+Regression tests include every 20 ms before a minute boundary with six different lead estimates, a full-day scheduling simulation with early completion and changing refresh durations, and forward/backward NTP corrections. System time remains synchronized by SNTP using the configured London timezone and a fifteen-minute synchronization interval.
