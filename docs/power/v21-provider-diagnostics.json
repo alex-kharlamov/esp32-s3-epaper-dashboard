@@ -1,0 +1,56 @@
+{
+  "weather": {
+    "latest_ok": true,
+    "fetched_at": 1791394712,
+    "source_at": 1791394200,
+    "failures": 0,
+    "retry_ms": 30000
+  },
+  "tfl_lines": {
+    "latest_ok": true,
+    "fetched_at": 1791394714,
+    "source_at": 1791394714,
+    "failures": 0,
+    "retry_ms": 30000
+  },
+  "tfl_stations": {
+    "latest_ok": true,
+    "fetched_at": 1791394716,
+    "source_at": 1791394716,
+    "failures": 0,
+    "retry_ms": 30000
+  },
+  "ntp": {
+    "latest_ok": true,
+    "fetched_at": 1791394716,
+    "source_at": 1791394714,
+    "failures": 0,
+    "retry_ms": 30000
+  },
+  "home_assistant": {
+    "latest_ok": false,
+    "fetched_at": 0,
+    "source_at": 0,
+    "failures": 0,
+    "retry_ms": 30000
+  },
+  "dlr_reason": "",
+  "jubilee_reason": "",
+  "clock_epoch": 1791394800,
+  "ntp_last_sync": 1791394714,
+  "batch_version": 3,
+  "network_active": false,
+  "quiet": false,
+  "rtc_enabled": false,
+  "rtc_present": false,
+  "rtc_time_valid": false,
+  "gauge_enabled": false,
+  "battery_available": false,
+  "firmware": "v21",
+  "maintenance": false,
+  "fault_count": 2,
+  "last_fault": "refresh: BUSY never asserted after refresh",
+  "ota_pending": false,
+  "heap_free": 255380,
+  "uptime_ms": 741298
+}

@@ -1,0 +1,113 @@
+v21 timing evidence; no current meter or independent reference clock.
+Cold-boot first full draw and its following minute may finish late; steady offsets are separate.
+Pre-final split radio deadlines were corrected in the final build.
+
+v21-corrected-validation.log
+CLOCK_SCHEDULE: target_epoch_ms=1791393420000 start_epoch_ms=1791393431669 lead_ms=21000
+DISPLAY_PHASE: NORMAL_COLOUR, 0 window(s)
+CLOCK_COMPLETE: target_epoch_ms=1791393420000 finish_epoch_ms=1791393450270 offset_ms=30270 cycle_ms=18600
+CLOCK_SCHEDULE: target_epoch_ms=1791393480000 start_epoch_ms=1791393471236 lead_ms=8770
+CLOCK_COMPLETE: target_epoch_ms=1791393480000 finish_epoch_ms=1791393478170 offset_ms=-1830 cycle_ms=6933
+CLOCK_SCHEDULE: target_epoch_ms=1791393540000 start_epoch_ms=1791393533073 lead_ms=6933
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791393540000 finish_epoch_ms=1791393540007 offset_ms=7 cycle_ms=6933
+CLOCK_SCHEDULE: target_epoch_ms=1791393600000 start_epoch_ms=1791393593073 lead_ms=6933
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=272..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791393600000 finish_epoch_ms=1791393600008 offset_ms=8 cycle_ms=6934
+CLOCK_SCHEDULE: target_epoch_ms=1791393660000 start_epoch_ms=1791393653072 lead_ms=6934
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791393660000 finish_epoch_ms=1791393660005 offset_ms=5 cycle_ms=6932
+CLOCK_SCHEDULE: target_epoch_ms=1791393720000 start_epoch_ms=1791393713074 lead_ms=6932
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791393720000 finish_epoch_ms=1791393720008 offset_ms=8 cycle_ms=6933
+CLOCK_SCHEDULE: target_epoch_ms=1791393780000 start_epoch_ms=1791393773073 lead_ms=6933
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791393780000 finish_epoch_ms=1791393780007 offset_ms=7 cycle_ms=6933
+PORTAL_CLOSED: normal operation resumed
+POWER_RADIO_ON: weather=1 lines=0 stations=0 ntp=0 ha=0
+WEATHER_FETCH_OK: temperature=12 wind=18.7 hours=48; CACHE_SAVED
+POWER_RADIO_OFF: session_ms=5702 connected=1 NTP_new=0 batch_version=2
+POWER_RADIO_ON: weather=0 lines=1 stations=1 ntp=1 ha=0
+NTP_SYNC: epoch=1791393873.772104
+TFL_FETCH: lines=OK stations=OK DLR=1 Jubilee=1 CanningTown=2 EastIndia=1
+POWER_RADIO_OFF: session_ms=6496 connected=1 NTP_new=1 batch_version=3
+CLOCK_SCHEDULE: target_epoch_ms=1791393900000 start_epoch_ms=1791393893074 lead_ms=6932
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791393900000 finish_epoch_ms=1791393900003 offset_ms=3 cycle_ms=6929
+CLOCK_SCHEDULE: target_epoch_ms=1791393960000 start_epoch_ms=1791393953077 lead_ms=6929
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791393960000 finish_epoch_ms=1791393960006 offset_ms=6 cycle_ms=6929
+CLOCK_SCHEDULE: target_epoch_ms=1791394020000 start_epoch_ms=1791394001405 lead_ms=18600
+DISPLAY_PHASE: NORMAL_COLOUR, 0 window(s)
+CLOCK_COMPLETE: target_epoch_ms=1791394020000 finish_epoch_ms=1791394020013 offset_ms=13 cycle_ms=18608
+
+v21-final-validation.log
+CLOCK_SCHEDULE: target_epoch_ms=1791394200000 start_epoch_ms=1791394238831 lead_ms=18600
+DISPLAY_PHASE: NORMAL_COLOUR, 0 window(s)
+CLOCK_COMPLETE: target_epoch_ms=1791394200000 finish_epoch_ms=1791394257430 offset_ms=57430 cycle_ms=18600
+CLOCK_SCHEDULE: target_epoch_ms=1791394260000 start_epoch_ms=1791394257438 lead_ms=6930
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791394260000 finish_epoch_ms=1791394264366 offset_ms=4366 cycle_ms=6928
+CLOCK_SCHEDULE: target_epoch_ms=1791394320000 start_epoch_ms=1791394313078 lead_ms=6928
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791394320000 finish_epoch_ms=1791394320007 offset_ms=7 cycle_ms=6929
+CLOCK_SCHEDULE: target_epoch_ms=1791394380000 start_epoch_ms=1791394373077 lead_ms=6929
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791394380000 finish_epoch_ms=1791394380005 offset_ms=5 cycle_ms=6928
+CLOCK_SCHEDULE: target_epoch_ms=1791394440000 start_epoch_ms=1791394433078 lead_ms=6928
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791394440000 finish_epoch_ms=1791394440006 offset_ms=6 cycle_ms=6928
+CLOCK_SCHEDULE: target_epoch_ms=1791394500000 start_epoch_ms=1791394493078 lead_ms=6928
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791394500000 finish_epoch_ms=1791394500007 offset_ms=7 cycle_ms=6929
+CLOCK_SCHEDULE: target_epoch_ms=1791394560000 start_epoch_ms=1791394553077 lead_ms=6929
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791394560000 finish_epoch_ms=1791394560006 offset_ms=6 cycle_ms=6929
+CLOCK_SCHEDULE: target_epoch_ms=1791394620000 start_epoch_ms=1791394613077 lead_ms=6929
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791394620000 finish_epoch_ms=1791394620004 offset_ms=4 cycle_ms=6927
+POWER_RADIO_ON: weather=1 lines=1 stations=1 ntp=1 ha=0
+CLOCK_SCHEDULE: target_epoch_ms=1791394680000 start_epoch_ms=1791394673076 lead_ms=6927
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+POWER_RADIO_OFF: session_ms=15025 connected=0 NTP_new=0 batch_version=2
+CLOCK_COMPLETE: target_epoch_ms=1791394680000 finish_epoch_ms=1791394680007 offset_ms=7 cycle_ms=6931
+POWER_RADIO_ON: weather=1 lines=1 stations=1 ntp=1 ha=0
+WEATHER_FETCH_OK: temperature=12 wind=18.7 hours=48; CACHE_SAVED
+NTP_SYNC: epoch=1791394714.999750
+TFL_FETCH: lines=OK stations=OK DLR=1 Jubilee=1 CanningTown=2 EastIndia=1
+POWER_RADIO_OFF: session_ms=8779 connected=1 NTP_new=1 batch_version=3
+CLOCK_SCHEDULE: target_epoch_ms=1791394740000 start_epoch_ms=1791394733075 lead_ms=6931
+DISPLAY_PHASE: FAST_CLOCK, 1 window(s)
+PARTIAL_WINDOW: controller=0 x=472..475 y=0..0
+PARTIAL_WINDOW: controller=1 x=464..659 y=8..243
+CLOCK_COMPLETE: target_epoch_ms=1791394740000 finish_epoch_ms=1791394740005 offset_ms=5 cycle_ms=6929

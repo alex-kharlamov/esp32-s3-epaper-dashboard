@@ -16,6 +16,8 @@ const DashboardData &sampleDashboard() {
     d.clock="12:34";d.date="6 OCT 2026";d.weekday="TUE";
     d.dlr=ServiceHealth::Good;d.jubilee=ServiceHealth::Good;
     d.canningTown=ServiceHealth::Notice;d.eastIndia=ServiceHealth::Good;
+    d.jubileeLabel="STATION NOTICE";d.jubileeReason="Lift unavailable: check step-free access";
+    d.statusText="WX 12:30 / FEELS 17C / RAIN FROM 16:00 / Open-Meteo";
     d.sampleData=true;return d;
   }();return data;
 }

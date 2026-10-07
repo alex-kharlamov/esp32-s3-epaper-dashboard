@@ -97,16 +97,20 @@ void weatherIcon(int x,int y,const char *name,int size) {
     line(cx,y+size*81/100,cx-size*5/100,y+size*92/100,size>90?4:3);
   }
 }
-void transportIndicator(int x,const char *name,ServiceHealth health) {
+void transportIndicator(int x,const char *name,ServiceHealth health,const char *label=nullptr,const char *reason=nullptr) {
   int background=health==ServiceHealth::Issue?RED:health==ServiceHealth::Notice?YELLOW:WHITE;
   int ink=background==RED?WHITE:BLACK;
   fill(x,252,680,44,background);
   if(health==ServiceHealth::Good){line(x+17,272,x+24,279,3,ink);line(x+24,279,x+37,263,3,ink);}
   else text(x+20,258,health==ServiceHealth::Issue || health==ServiceHealth::Notice?"!":"?",font28,ink,22);
   const char *status=health==ServiceHealth::Good?"GOOD":health==ServiceHealth::Notice?"NOTICE":health==ServiceHealth::Issue?"ISSUE":health==ServiceHealth::Stale?"OLD":"UNKNOWN";
-  int statusWidth=textWidth(status,font24);
-  text(x+49,259,name,font24,ink,680-65-statusWidth-20);
-  text(x+660-statusWidth,259,status,font24,ink);
+  if(label&&*label)status=label;
+  // Bound detailed status to leave the station label readable.
+  int statusWidth=textWidth(status,font20);if(statusWidth>300){status=health==ServiceHealth::Issue?"DISRUPTION":health==ServiceHealth::Notice?"NOTICE":status;statusWidth=textWidth(status,font20);}
+  bool detail=reason&&*reason;
+  text(x+49,detail?254:259,name,font20,ink,680-65-statusWidth-20);
+  text(x+660-statusWidth,detail?254:259,status,font20,ink);
+  if(detail)text(x+49,278,reason,font14,ink,611);
 }
 struct ClockGeometry {
   int top,bottom,total,base;
@@ -169,7 +173,7 @@ const char *healthLabel(ServiceHealth state) {
 }
 
 }
-void renderSleepScreen(uint8_t *buffer) {
+void renderSleepScreen(uint8_t *buffer,unsigned wakeHour) {
   canvas=buffer;memset(canvas,0x55,DASH_BYTES);
   for(int y=0;y<SLEEP_ART_HEIGHT;y++)for(int x=0;x<SLEEP_ART_WIDTH;x++) {
     int i=y*(SLEEP_ART_WIDTH/4)+x/4,shift=6-2*(x%4);
@@ -177,7 +181,7 @@ void renderSleepScreen(uint8_t *buffer) {
   }
   centeredText(1030,115,"GOOD NIGHT",font60,590);
   centeredText(1030,202,"A LITTLE REST",font35,560);
-  centeredText(1030,267,"BACK AT 07:00",font35,560);
+  char wake[32];snprintf(wake,sizeof(wake),"BACK AT %02u:00",wakeHour);centeredText(1030,267,wake,font35,560);
   centeredText(680,421,"WEATHER AND TFL WILL RESUME IN THE MORNING",font20,1260);
 }
 
@@ -186,8 +190,8 @@ void renderDashboard(uint8_t *buffer,const DashboardData &d) {
   upperCopy(label,sizeof(label),d.location);text(20,0,label,font60,BLACK,420);
   snprintf(s,sizeof(s),"%s %s",d.weekday,d.date);upperCopy(label,sizeof(label),s);
   text(20,55,label,font24,BLACK,420);
-  if(d.weatherAvailable)snprintf(s,sizeof(s),"%d°C",d.temperature);else snprintf(s,sizeof(s),"--°C");
-  text(180,86,s,font120,BLACK,260);
+  if(d.weatherAvailable)snprintf(s,sizeof(s),"%d°%s",d.temperature,d.fahrenheit?"F":"C");else snprintf(s,sizeof(s),"--°C");
+  text(180,86,s,textWidth(s,font120)<=260?font120:font80,BLACK,260);
   if(d.weatherAvailable)weatherIcon(28,88,d.weatherIcon,120);
   char weatherLabel[64];
   snprintf(weatherLabel,sizeof(weatherLabel),"%s",d.weatherAvailable?condition(d.weatherIcon):"WEATHER UNAVAILABLE");
@@ -200,14 +204,14 @@ void renderDashboard(uint8_t *buffer,const DashboardData &d) {
   static const char *directions[]={"N","NE","E","SE","S","SW","W","NW"};
   int direction=((d.windDirection%360)+360)%360;
   if(d.windSpeed<0)snprintf(s,sizeof(s),"-- km/h");
-  else snprintf(s,sizeof(s),"%s %.0f km/h",directions[((direction+22)/45)%8],d.windSpeed);
+  else snprintf(s,sizeof(s),"%s %.0f %s",directions[((direction+22)/45)%8],d.windSpeed,d.windMph?"mph":"km/h");
   icon(18,213,"icon_wind",30);text(52,215,s,font24,BLACK,120);
   line(453,8,453,244,1);
   if(!strcmp(d.clock,"--:--"))centeredText(906,95,"TIME WAITING",font60,830);
   else clockRow(d.clock);
 
-  transportIndicator(0,"EAST INDIA / DLR",journeyHealth(d.dlr,d.eastIndia));
-  transportIndicator(680,"CANNING TOWN / JUBILEE",journeyHealth(d.jubilee,d.canningTown));
+  transportIndicator(0,d.dlrName,journeyHealth(d.dlr,d.eastIndia),d.dlrLabel,d.dlrReason);
+  transportIndicator(680,d.jubileeName,journeyHealth(d.jubilee,d.canningTown),d.jubileeLabel,d.jubileeReason);
   line(0,252,1359,252,1);line(0,295,1359,295,1);
   for(int i=0;i<8;i++) {
     int x=i*170,center=x+85;
@@ -219,12 +223,15 @@ void renderDashboard(uint8_t *buffer,const DashboardData &d) {
     char temp[24],chance[16];
     if(d.forecast[i].available){snprintf(temp,sizeof(temp),"%d° / ",d.forecast[i].temperature);snprintf(chance,sizeof(chance),"%d%%",rain);}
     else {snprintf(temp,sizeof(temp),"--° / ");snprintf(chance,sizeof(chance),"--%%");}
-    int tw=textWidth(temp,font24),cw=textWidth(chance,font24),left=center-(tw+cw)/2;
-    if(d.forecast[i].available && rain>=40)fill(left+tw-2,426,cw+4,26,YELLOW);
-    text(left,423,temp,font24);text(left+tw,423,chance,font24);
+    const BitmapFont &forecastFont=textWidth(temp,font24)+textWidth(chance,font24)<=158?font24:font20;
+    int tw=textWidth(temp,forecastFont),cw=textWidth(chance,forecastFont),left=center-(tw+cw)/2;
+    bool highRain=d.forecast[i].available && rain>50;
+    if(d.forecast[i].available && rain>=40)fill(left+tw-2,426,cw+4,26,highRain?RED:YELLOW);
+    text(left,423,temp,forecastFont);text(left+tw,423,chance,forecastFont,highRain?WHITE:BLACK);
   }
   line(0,459,1359,459,1);
   const char *footer=d.statusText?d.statusText:(d.sampleData?"SAMPLE DATA":"WEATHER UNAVAILABLE");
+  if(d.batteryPercent>=0&&d.batteryPercent<=15)fill(14,463,142,17,YELLOW);
   text(20,464,footer,font14,BLACK,1100);
   if(d.transportCheckedAt){time_t checked=d.transportCheckedAt;tm local{};localtime_r(&checked,&local);strftime(s,sizeof(s),"TfL %H:%M",&local);}
   else snprintf(s,sizeof(s),d.sampleData?"TfL 12:33 / SAMPLE":"TfL --:--");

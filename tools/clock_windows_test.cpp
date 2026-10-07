@@ -2,6 +2,7 @@
 #include "ClockUpdate.h"
 #include "ClockSchedule.h"
 #include "QuietHours.h"
+#include "PowerPolicy.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,6 +27,12 @@ void check(const char *before,const char *after) {
  }
 }
 int main() {
+ for(unsigned i=1;i<100;i++){uint32_t expected=i<6?(30000u<<(i-1)):600000u;if(powerRetryDelay(i)!=expected)abort();}
+ if(powerCooldownRemaining(true,1800000000090LL,1800000000000LL,180000)!=179910)abort();
+ if(powerCooldownRemaining(true,1800000180000LL,1800000000000LL,180000)!=0)abort();
+ if(powerCooldownRemaining(false,1800000180000LL,1800000000000LL,180000)!=180000)abort();
+ if(powerCooldownRemaining(true,1799999999999LL,1800000000000LL,180000)!=180000)abort();
+ if(powerClockWait(53000,0,7000)!=20 || powerClockWait(50000,0,7000)!=1000 || powerClockWait(59000,60000,0)!=1000)abort();
  // Quiet mode uses London civil time, including both DST transitions.
  setenv("TZ","GMT0BST,M3.5.0/1,M10.5.0",1);tzset();
  if(quietHours(0))abort();
@@ -36,6 +43,7 @@ int main() {
    tm local{};local.tm_year=126;local.tm_mon=months[day];local.tm_mday=days[day];local.tm_hour=hour;local.tm_isdst=-1;
    time_t epoch=mktime(&local);tm normalized{};localtime_r(&epoch,&normalized);
    bool expected=normalized.tm_hour<7;
+   time_t early=powerMorningWake(epoch);if(expected){tm wakeLocal{};localtime_r(&early,&wakeLocal);if(normalized.tm_hour<6 && (wakeLocal.tm_hour!=6 || wakeLocal.tm_min!=55))abort();if(early<epoch)abort();}else if(early!=0)abort();
    if(quietHours(epoch)!=expected)abort();
    QuietAction action=state.update(expected);
    if(hour==0 && action!=QuietAction::Sleep)abort();
@@ -49,6 +57,7 @@ int main() {
  if(!quietHours(wake-1) || quietHours(wake))abort();
  boundary.tm_hour=0;time_t midnight=mktime(&boundary);
  if(quietHours(midnight-1) || !quietHours(midnight))abort();
+ puts("Power policy: retry cap, retained cooldown, clock deadlines and DST wake passed.");
  puts("Quiet hours: exact midnight/07:00 boundaries, invalid time, winter/summer/DST and one-shot sleep/wake passed.");
  // Before the deadline, at it, after a completed predictive update, and late.
  if(clockDisplayTarget(112999,60000,7000)!=-1)abort();

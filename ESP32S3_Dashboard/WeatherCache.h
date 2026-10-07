@@ -9,6 +9,8 @@ struct WeatherHour {
   int64_t epoch;
   int16_t temperature, code;
   uint8_t rainProbability, isDay;
+  float precipitation=0;
+  bool precipitationAvailable=false;
 };
 // Persist values, not DashboardData's pointers into RAM or flash.
 struct WeatherSnapshot {
@@ -18,6 +20,8 @@ struct WeatherSnapshot {
   int16_t temperature, windDirection, code;
   uint8_t isDay, hourCount;
   WeatherHour hourly[WEATHER_HOURS];
+  float apparentTemperature=0,gustSpeed=0;
+  bool extrasAvailable=false;
 };
 struct WeatherRecord {
   uint32_t magic, version, size, checksum;
@@ -39,22 +43,34 @@ inline bool validWeather(const WeatherSnapshot &w,double latitude,double longitu
   if(w.fetchedAt<MIN_VALID_EPOCH || w.observedAt<MIN_VALID_EPOCH || w.fetchedAt>4102444800LL || w.observedAt>w.fetchedAt+3600)return false;
   if(w.temperature < -90 || w.temperature>80)return false;
   if(!isfinite(w.windSpeed) || w.windSpeed<0 || w.windSpeed>400 || w.windDirection<0 || w.windDirection>360)return false;
+  if(w.extrasAvailable && (!isfinite(w.apparentTemperature)||w.apparentTemperature < -100||w.apparentTemperature>100||!isfinite(w.gustSpeed)||w.gustSpeed<0||w.gustSpeed>500))return false;
   if(!validWeatherCode(w.code) || w.isDay>1 || !w.hourCount || w.hourCount>WEATHER_HOURS)return false;
   for(int i=0;i<w.hourCount;i++) {
     const auto &h=w.hourly[i];
     if(h.epoch<MIN_VALID_EPOCH || h.epoch>4102444800LL || (i && h.epoch!=w.hourly[i-1].epoch+3600))return false;
+    if(h.precipitationAvailable && (!isfinite(h.precipitation)||h.precipitation<0||h.precipitation>500))return false;
     if(h.temperature < -90 || h.temperature>80 || h.rainProbability>100 || h.isDay>1 || !validWeatherCode(h.code))return false;
   }
   return true;
 }
 inline WeatherRecord makeWeatherRecord(const WeatherSnapshot &w) {
-  WeatherRecord result{};result.magic=0x57584348;result.version=1;result.size=sizeof(w);
+  WeatherRecord result{};result.magic=0x57584348;result.version=2;result.size=sizeof(w);
   memcpy(&result.weather,&w,sizeof(w));result.checksum=weatherChecksum(result.weather);return result;
 }
+struct LegacyWeatherHour {int64_t epoch;int16_t temperature,code;uint8_t rainProbability,isDay;};
+struct LegacyWeatherSnapshot {int64_t fetchedAt,observedAt;double latitude,longitude;float windSpeed;int16_t temperature,windDirection,code;uint8_t isDay,hourCount;LegacyWeatherHour hourly[WEATHER_HOURS];};
+struct LegacyWeatherRecord {uint32_t magic,version,size,checksum;LegacyWeatherSnapshot weather;};
 inline bool loadWeatherRecord(const void *bytes,size_t length,double latitude,double longitude,WeatherSnapshot &out) {
+  if(length==sizeof(LegacyWeatherRecord)) {
+    LegacyWeatherRecord old{};memcpy(&old,bytes,sizeof(old));uint32_t hash=2166136261u;const auto *raw=(const uint8_t*)&old.weather;for(size_t i=0;i<sizeof(old.weather);i++)hash=(hash^raw[i])*16777619u;
+    if(old.magic!=0x57584348||old.version!=1||old.size!=sizeof(old.weather)||hash!=old.checksum||old.weather.hourCount>WEATHER_HOURS)return false;
+    WeatherSnapshot migrated{};auto &v=old.weather;migrated.fetchedAt=v.fetchedAt;migrated.observedAt=v.observedAt;migrated.latitude=v.latitude;migrated.longitude=v.longitude;migrated.windSpeed=v.windSpeed;migrated.temperature=v.temperature;migrated.windDirection=v.windDirection;migrated.code=v.code;migrated.isDay=v.isDay;migrated.hourCount=v.hourCount;
+    for(int i=0;i<v.hourCount;i++){auto &h=v.hourly[i];migrated.hourly[i]={h.epoch,h.temperature,h.code,h.rainProbability,h.isDay};}
+    if(!validWeather(migrated,latitude,longitude))return false;out=migrated;return true;
+  }
   if(length!=sizeof(WeatherRecord))return false;
   WeatherRecord record{};memcpy(&record,bytes,sizeof(record));
-  if(record.magic!=0x57584348 || record.version!=1 || record.size!=sizeof(WeatherSnapshot) || record.checksum!=weatherChecksum(record.weather))return false;
+  if(record.magic!=0x57584348 || record.version!=2 || record.size!=sizeof(WeatherSnapshot) || record.checksum!=weatherChecksum(record.weather))return false;
   if(!validWeather(record.weather,latitude,longitude))return false;
   memcpy(&out,&record.weather,sizeof(out));return true;
 }

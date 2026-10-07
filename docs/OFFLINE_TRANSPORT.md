@@ -46,3 +46,7 @@ Run `bash tools/test_live_data.sh` after setup. It uses captured public fixtures
 The combined Field Journal firmware was built and flashed on 6 October 2026. The device fetched real weather, saved it, and restored 48 forecast hours before Wi-Fi connected after an explicit restart. Live TfL requests succeeded for both lines and all monitored stations. Two consecutive one-window clock updates completed 33 ms and 18 ms after their NTP minute boundaries. The startup full refresh completed normally; it was not a minute-alignment measurement.
 
 [Recorded results](offline-transport-validation.json) and [selected serial evidence](offline-transport-serial.log) distinguish device observations from host tests. Cache recovery was observed on a connected-board restart; offline rendering and transport header transitions were verified with host fixtures rather than a forced hardware outage.
+
+## v21 provider independence and detail
+
+Weather, TfL lines, TfL stations and NTP keep independent health/retry state. A weather failure cannot make a successful TfL check stale. Detailed severity and bounded reason text are retained; upcoming periods within seven days supply planned notices. Station/line state is cached with checksum/version and configured station IDs, but restored checks are always old until confirmed by the API. Current weather source time expires after two hours even when the download was recent. Ten-minute batches and minute clock-only windows remain the default.

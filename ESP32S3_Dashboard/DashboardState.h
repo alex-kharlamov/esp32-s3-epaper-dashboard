@@ -38,7 +38,8 @@ inline void composeDashboard(DashboardData &data,DashboardText &text,const Weath
     if(j>=0){const auto &h=w->hourly[j];data.forecast[i]={text.hours[i],h.temperature,snapshotWeatherIcon(h.code,h.isDay),h.rainProbability,true};}
     else data.forecast[i]={text.hours[i],0,"",0,false};
   }
-  auto health=[&](const TransportCheck &check){return currentTransportHealth(check,now,online,staleSeconds);};
+  // A successful TfL check is independent of weather/API reachability.
+  auto health=[&](const TransportCheck &check){return currentTransportHealth(check,now,check.latestRequestOk,staleSeconds);};
   data.dlr=health(t.dlr);data.jubilee=health(t.jubilee);
   data.canningTown=health(t.canningTube);data.eastIndia=health(t.eastIndia);
   if(t.dlr.checkedAt && t.jubilee.checkedAt && t.canningTube.checkedAt && t.eastIndia.checkedAt) {

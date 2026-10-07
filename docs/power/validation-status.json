@@ -1,0 +1,72 @@
+{
+  "status": "V21_TEN_IMPROVEMENTS_FLASHED_AND_CORE_DEVICE_CHECKS_PASSED",
+  "date": "2026-10-07",
+  "electrical_current_measured": false,
+  "battery_assumption": "3000 mAh single 3.7 V cell; no meter available",
+  "firmware": "v21 RESILIENT DASHBOARD",
+  "private_and_public_builds": "PASS: 1561095 bytes program, 55436 bytes globals",
+  "host_tests": "PASS: 1440 clock transitions, NTP scheduling, power/DST/quiet hours, provider failure retries and shared batch deadline, settings, bounded/chunked HTTP, cache migration/corruption, transport detail priority, hardware register decoding and renderer guards",
+  "latest_flash": "v21 ten improvements: hash verified, SPI_FAST_FLASH_BOOT, preserved Wi-Fi/settings",
+  "initial_radio_session_ms": 10373,
+  "initial_session_fresh_NTP": true,
+  "observed_idle_CPU_MHz": 80,
+  "verified_minute_redraw_after_power_changes": true,
+  "verified_light_sleep_probe": true,
+  "verified_deep_sleep_timer_wake": true,
+  "verified_overnight_run": false,
+  "runtime_estimates": "Scenario estimates only; docs/power/battery-estimate.json",
+  "startup_recovery": "Single-cable USB-OTG full power cycle restored SPI_FAST_FLASH_BOOT. Exact earlier download-mode trigger unconfirmed.",
+  "latest_radio_session_ms": 8779,
+  "minute_window_cycle_ms": 6933,
+  "minute_waveform_ms": 5270,
+  "minute_completion_offset_ms": 7,
+  "verified_physical_clock_during_battery_test": true,
+  "light_sleep_probe": {
+    "duration_ms": 991,
+    "count": 1,
+    "errors": 0
+  },
+  "deep_sleep_probe": {
+    "timer_seconds": 90,
+    "timer_wake": true,
+    "retained_cooldown_ms": 89955,
+    "dashboard_restore": true
+  },
+  "verified_second_ten_minute_batch": true,
+  "verified_bounded_battery_test_counters": true,
+  "USB_test_limitation": "USB did not re-enumerate automatically; saved counters recovered after user reconnected and requested flash.",
+  "bounded_battery_test": {
+    "complete": true,
+    "elapsed_ms": 120168,
+    "light_sleep_ms": 112552,
+    "busy_sleep_ms": 10557,
+    "sleeps": 117,
+    "errors": 0,
+    "cycles": 2,
+    "worst_clock_offset_ms": 202
+  },
+  "v21": {
+    "full_cycle_ms": 18608,
+    "full_waveform_ms": 16981,
+    "full_completion_offset_ms": 13,
+    "steady_minute_completion_offset_ms_range": [
+      3,
+      8
+    ],
+    "setup_AP_handover_and_close": "PASS; client HTTP/OTA not exercised",
+    "independent_provider_diagnostics": "PASS: weather, TfL lines/stations and NTP fresh",
+    "shared_batch_deadline": "PASS on board: weather, lines, stations and NTP requested together; transient association failure recovered on retry in one successful 8779 ms session",
+    "prior_spi_initialization_faults": 2,
+    "physical_optional_RTC_tested": false,
+    "physical_optional_fuel_gauge_tested": false,
+    "home_assistant_configured": false,
+    "OTA_upload_and_rollback_exercised": false,
+    "CI_executed": false,
+    "final_board_minute_completion_offsets_ms_range": [
+      4,
+      7
+    ],
+    "final_board_new_faults": 0,
+    "final_provider_health": "weather/TfL lines/TfL stations/NTP latest_ok=true; radio and maintenance off"
+  }
+}

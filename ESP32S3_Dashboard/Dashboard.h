@@ -25,7 +25,11 @@ struct DashboardData {
   ServiceHealth dlr=ServiceHealth::Unknown, jubilee=ServiceHealth::Unknown;
   ServiceHealth canningTown=ServiceHealth::Unknown, eastIndia=ServiceHealth::Unknown;
   int64_t transportCheckedAt=0;
+  const char *dlrLabel=nullptr,*jubileeLabel=nullptr,*dlrReason=nullptr,*jubileeReason=nullptr;
+  bool fahrenheit=false,windMph=false;
+  float batteryPercent=-1;
+  const char *dlrName="EAST INDIA / DLR",*jubileeName="CANNING TOWN / JUBILEE";
 };
 void renderDashboard(uint8_t *buffer,const DashboardData &data);
-void renderSleepScreen(uint8_t *buffer);
+void renderSleepScreen(uint8_t *buffer,unsigned wakeHour=7);
 const DashboardData &sampleDashboard();

@@ -27,6 +27,7 @@
 # THE SOFTWARE.
 #
 ******************************************************************************/
+#include "PowerManager.h"
 #include "EPD_10in85g.h"
 #include "Debug.h"
 
@@ -129,7 +130,7 @@ void EPD_10in85g_ReadBusy(void)
     Serial.printf("BUSY wait: %s, level=%d (LOW=busy)\n", demoStage, digitalRead(EPD_BUSY_PIN));
     while (digitalRead(EPD_BUSY_PIN) == LOW) {
         if (millis() - start >= 90000) demoAbort("BUSY timeout (90 seconds)");
-        delay(10);
+        powerBusyWait(EPD_BUSY_PIN,1000);
     }
     delay(10);
     Serial.printf("BUSY released: %s after %lu ms\n", demoStage, (unsigned long)(millis()-start));
@@ -378,18 +379,14 @@ static void EPD_10in85g_WriteFrame(const UBYTE *Image)
     EPD_10in85g_SendCommand_0(0x10);
     for (UWORD j = 0; j < Height; j++) {
         if ((j % 16) == 0) delay(1);
-        for (UWORD i = 0; i < Width; i++) {
-            EPD_10in85g_SendData_0(Image[j*2*Width + i]);
-        }
+        EPD_10in85g_SendnData_0(const_cast<UBYTE*>(Image+j*2*Width),Width);
     }	
 
     Serial.println("Write CS_S / right controller");
     EPD_10in85g_SendCommand_1(0x10);
     for (UWORD j = 0; j < Height; j++) {
         if ((j % 16) == 0) delay(1);
-        for (UWORD i = 0; i < Width; i++) {
-            EPD_10in85g_SendData_1(Image[j*2*Width + i + Width]);
-        }
+        EPD_10in85g_SendnData_1(const_cast<UBYTE*>(Image+j*2*Width+Width),Width);
     }
 
 }

@@ -28,6 +28,8 @@
 #
 ******************************************************************************/
 #include "DEV_Config.h"
+#include <SPI.h>
+namespace { SPIClass displaySpi(FSPI); bool spiStarted=false; }
 
 void GPIO_Config(void)
 {
@@ -68,6 +70,8 @@ UBYTE DEV_Module_Init(void)
 	//serial printf
 	Serial.begin(115200);
 
+    if(!spiStarted){if(!displaySpi.begin(EPD_SCK_PIN,-1,EPD_MOSI_PIN,-1))demoAbort("SPI initialization failed");spiStarted=true;}
+    displaySpi.beginTransaction(SPISettings(4000000,MSBFIRST,SPI_MODE0));
 	// spi
 	// SPI.setDataMode(SPI_MODE0);
 	// SPI.setBitOrder(MSBFIRST);
@@ -85,15 +89,7 @@ function:
 
 void DEV_SPI_WriteByte(UBYTE data)
 {
-    for (int i = 0; i < 8; i++)
-    {
-        if ((data & 0x80) == 0) digitalWrite(EPD_MOSI_PIN, GPIO_PIN_RESET); 
-        else                    digitalWrite(EPD_MOSI_PIN, GPIO_PIN_SET);
-
-        data <<= 1;
-        digitalWrite(EPD_SCK_PIN, GPIO_PIN_SET);     
-        digitalWrite(EPD_SCK_PIN, GPIO_PIN_RESET);
-    }
+    displaySpi.transfer(data);
 
 }
 
@@ -116,13 +112,17 @@ UBYTE DEV_SPI_ReadByte()
 
 void DEV_SPI_Write_nByte(UBYTE *pData, UDOUBLE len)
 {
-    for (int i = 0; i < len; i++)
-        DEV_SPI_WriteByte(pData[i]);
+    displaySpi.writeBytes(pData,len);
 }
 
 
 void DEV_Module_Exit(void)
 {
+    if(spiStarted){displaySpi.endTransaction();displaySpi.end();spiStarted=false;}
+    const int pins[]={EPD_PWR_PIN,EPD_RST_PIN,EPD_MOSI_PIN,EPD_SCK_PIN,EPD_DC_PIN,EPD_CS_M_PIN,EPD_CS_S_PIN};
+    for(int pin:pins){pinMode(pin,OUTPUT);digitalWrite(pin,LOW);}
     digitalWrite(EPD_PWR_PIN , LOW);
     digitalWrite(EPD_RST_PIN , LOW);
+    digitalWrite(EPD_MOSI_PIN, LOW);digitalWrite(EPD_SCK_PIN, LOW);
+    digitalWrite(EPD_DC_PIN, LOW);digitalWrite(EPD_CS_M_PIN, LOW);digitalWrite(EPD_CS_S_PIN, LOW);
 }

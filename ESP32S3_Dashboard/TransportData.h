@@ -7,6 +7,8 @@ struct TransportCheck {
   ServiceHealth health=ServiceHealth::Unknown;
   int64_t checkedAt=0;
   bool latestRequestOk=false;
+  char label[33]{},reason[161]{},planned[81]{};
+  int64_t plannedAt=0;
 };
 struct TransportSnapshot { TransportCheck dlr,jubilee,canningDlr,canningTube,eastIndia; };
 inline ServiceHealth currentTransportHealth(const TransportCheck &c,int64_t now,bool online,uint32_t staleSeconds) {

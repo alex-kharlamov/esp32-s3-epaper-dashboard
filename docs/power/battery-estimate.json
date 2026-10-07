@@ -1,0 +1,108 @@
+{
+  "type": "ESTIMATE\u2014not electrical measurement",
+  "firmware": "v21 hardware SPI; electrical assumptions unchanged from v20",
+  "battery_Wh": 11.1,
+  "usable_Wh": 9.435,
+  "baseline": {
+    "assumed_load_W": [
+      0.4,
+      0.5,
+      0.7
+    ],
+    "lifetime_hours": [
+      23.6,
+      18.9,
+      13.5
+    ]
+  },
+  "measured_durations": {
+    "clock_cycle_seconds": 6.933,
+    "clock_BUSY_seconds": 5.27,
+    "full_cycle_seconds": 18.6,
+    "full_BUSY_seconds": 16.981,
+    "radio_session_samples_seconds": [
+      10.275,
+      10.77,
+      12.913,
+      15.063
+    ],
+    "radio_session_mean_seconds": 12.25525,
+    "single_light_probe_ms": 991,
+    "deep_timer_test_seconds": 90
+  },
+  "improved_battery_profile": {
+    "optimistic": {
+      "day_W": 0.0293,
+      "night_W": 0.0101,
+      "average_W": 0.0237,
+      "lifetime_hours": 397.5,
+      "lifetime_days": 16.56
+    },
+    "central": {
+      "day_W": 0.0514,
+      "night_W": 0.0252,
+      "average_W": 0.0439,
+      "lifetime_hours": 215.1,
+      "lifetime_days": 8.96
+    },
+    "conservative": {
+      "day_W": 0.0995,
+      "night_W": 0.0503,
+      "average_W": 0.0854,
+      "lifetime_hours": 110.5,
+      "lifetime_days": 4.61
+    }
+  },
+  "board_overhead_sensitivity_central_powers": {
+    "0.01_W": {
+      "day_W": 0.0364,
+      "night_W": 0.0102,
+      "average_W": 0.0289,
+      "lifetime_hours": 326.9,
+      "lifetime_days": 13.62
+    },
+    "0.025_W": {
+      "day_W": 0.0514,
+      "night_W": 0.0252,
+      "average_W": 0.0439,
+      "lifetime_hours": 215.1,
+      "lifetime_days": 8.96
+    },
+    "0.05_W": {
+      "day_W": 0.0764,
+      "night_W": 0.0502,
+      "average_W": 0.0689,
+      "lifetime_hours": 137.0,
+      "lifetime_days": 5.71
+    },
+    "0.1_W": {
+      "day_W": 0.1264,
+      "night_W": 0.1002,
+      "average_W": 0.1189,
+      "lifetime_hours": 79.4,
+      "lifetime_days": 3.31
+    },
+    "0.15_W": {
+      "day_W": 0.1764,
+      "night_W": 0.1502,
+      "average_W": 0.1689,
+      "lifetime_hours": 55.9,
+      "lifetime_days": 2.33
+    }
+  },
+  "assumptions": {
+    "day_hours": 17.083333333333332,
+    "night_hours": 6.916666666666667,
+    "CPU_work_seconds_per_600": 16.586000000000006,
+    "panel_waveform_seconds_per_600": 65.28933333333333,
+    "radio_seconds_per_600": "10.275 / observed mean / 30",
+    "transfer_W": "0.200 / 0.250 / 0.300",
+    "additional_radio_W": "0.250 / 0.350 / 0.500",
+    "light_sleep_W": "0.003 / 0.006 / 0.010",
+    "deep_sleep_W": "0.0001 / 0.0002 / 0.0003",
+    "board_overhead_W": "0.010 / 0.025 / 0.050; additional sensitivity to 0.150",
+    "radio_load": "Added conservatively, including when CPU work overlaps; not exact RF airtime",
+    "cold_boot_and_midnight_redraw": "Small additional daily overhead excluded",
+    "unmodelled": "battery ageing/cutoff, conversion topology, LED/regulator actual current, Wi-Fi failures"
+  }
+}

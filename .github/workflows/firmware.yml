@@ -1,0 +1,29 @@
+name: Firmware and regression checks
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned toolchain
+        run: ./scripts/setup.sh
+      - name: Clock, quiet hours and power policy
+        run: ./tools/test_clock_windows.sh
+      - name: Live data, settings and network failure tests
+        env:
+          ARDUINOJSON_INCLUDE: ${{ github.workspace }}/.tools/user/libraries/ArduinoJson/src
+        run: ./tools/test_live_data.sh
+      - name: Firmware build
+        run: ./scripts/build.sh
+      - name: Preview
+        run: ./tools/preview.sh
+      - name: Package application and checksum
+        run: python3 tools/package_firmware.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: esp32-s3-dashboard
+          path: |
+            build/release/*
+            build/preview/dashboard.png

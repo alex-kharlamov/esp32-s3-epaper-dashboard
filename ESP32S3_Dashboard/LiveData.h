@@ -12,3 +12,10 @@ void clearTransportRepaint();
 
 // Scheduled quiet period, or a short USB diagnostic preview.
 bool liveDataQuiet();
+
+void stopLiveData();
+
+#include <ArduinoJson.h>
+bool liveNetworkActive();
+bool livePrepareFullRefresh(int64_t target);
+void liveDiagnostics(JsonDocument &doc);
